@@ -48,13 +48,12 @@ const TrendingProducts = () => {
 
   const fetchData = async () => {
     try {
-      const res = await axiosSecure.get('/products?status=accepted');
-      const sorted = res.data
-        .sort((a, b) => (b.upvotes || 0) - (a.upvotes || 0))
-        .slice(0, 6);
-      setProducts(sorted);
+      const res = await axiosSecure.get('/products?sort=upvotes');
+      const products = Array.isArray(res.data) ? res.data : res.data.data;
+      const trending = (products || []).sort((a, b) => b.upvotes - a.upvotes);
+      setProducts(trending.slice(0, 6));
     } catch (error) {
-      console.error("Failed to fetch trending products:", error);
+      console.error('Failed to fetch trending products:', error);
     }
   };
 

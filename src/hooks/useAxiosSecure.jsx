@@ -24,9 +24,7 @@ const useSecureAxios = () => {
     (error) => {
       if (error.response && error.response.status === 403) {
         console.error("❌ 403 Forbidden: JWT might be invalid or expired.");
-        // Optional: Auto logout or redirect
-        // localStorage.removeItem("access-token");
-        // window.location.href = "/login";
+        
       }
       return Promise.reject(error);
     }

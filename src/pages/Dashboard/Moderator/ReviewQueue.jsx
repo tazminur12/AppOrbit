@@ -6,34 +6,25 @@ import Swal from 'sweetalert2';
 const ReviewQueue = () => {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [limit] = useState(10); // You can adjust the page size
   const axiosSecure = useAxiosSecure();
   const navigate = useNavigate();
 
   useEffect(() => {
     fetchProducts();
-  }, []);
+  }, [currentPage]);
 
   const fetchProducts = async () => {
+    setLoading(true);
     try {
-      // Get all products for review (pending, accepted, rejected)
-      // We need to get all products since the backend filters by status: "accepted" only
-      const response = await axiosSecure.get('/products?limit=1000&status=all'); // Get all products for review
-      
-      // If the backend doesn't support status=all, we'll need to modify the backend
-      // For now, let's try to get all products and filter on frontend
-      let allProducts = response.data;
-      
-      // If we only get accepted products, we need to make a separate call for all products
-      if (allProducts.length > 0 && allProducts.every(p => p.status === 'accepted')) {
-        // Make a separate call to get all products for review
-        try {
-          const allResponse = await axiosSecure.get('/products/review-queue');
-          allProducts = allResponse.data;
-        } catch {
-          console.log('Review queue endpoint not available, using current data');
-        }
-      }
-      
+      // Get paginated products for review
+      const response = await axiosSecure.get(`/products?status=all&page=${currentPage}&limit=${limit}`);
+      let allProducts = Array.isArray(response.data) ? response.data : response.data.data;
+      allProducts = allProducts || [];
+      const totalCount = response.data.total || allProducts.length;
+      setTotalPages(Math.ceil(totalCount / limit));
       // Sort products: pending first, then accepted, then rejected
       const sortedProducts = allProducts.sort((a, b) => {
         const statusOrder = { pending: 0, accepted: 1, rejected: 2 };
@@ -56,7 +47,7 @@ const ReviewQueue = () => {
   };
 
   const handleViewDetails = (productId) => {
-    navigate(`/product/${productId}`);
+    navigate(`/products/${productId}`);
   };
 
   const handleMakeFeatured = async (productId, isFeatured) => {
@@ -350,6 +341,141 @@ const ReviewQueue = () => {
           </div>
         )}
       </div>
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="flex justify-center mt-8">
+          <nav className="flex items-center space-x-2">
+            <button
+              onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+              disabled={currentPage === 1}
+              className="px-4 py-2 text-sm font-medium text-gray-500 bg-gray-800 border border-gray-600 rounded-lg hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+            >
+              Previous
+            </button>
+            {/* Ellipsis Pagination Logic */}
+            {(() => {
+              const pages = [];
+              const maxButtons = 5;
+              if (totalPages <= maxButtons) {
+                for (let page = 1; page <= totalPages; page++) {
+                  pages.push(
+                    <button
+                      key={page}
+                      onClick={() => setCurrentPage(page)}
+                      className={`px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200 ${
+                        currentPage === page
+                          ? 'bg-green-600 text-white shadow-lg'
+                          : 'text-gray-400 bg-gray-800 border border-gray-600 hover:bg-gray-700 hover:text-white'
+                      }`}
+                    >
+                      {page}
+                    </button>
+                  );
+                }
+              } else {
+                // Always show first and last, current, and neighbors
+                const first = 1;
+                const last = totalPages;
+                const prev = Math.max(currentPage - 1, first + 1);
+                const next = Math.min(currentPage + 1, last - 1);
+                // First page
+                pages.push(
+                  <button
+                    key={first}
+                    onClick={() => setCurrentPage(first)}
+                    className={`px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200 ${
+                      currentPage === first
+                        ? 'bg-green-600 text-white shadow-lg'
+                        : 'text-gray-400 bg-gray-800 border border-gray-600 hover:bg-gray-700 hover:text-white'
+                    }`}
+                  >
+                    {first}
+                  </button>
+                );
+                // Ellipsis before
+                if (currentPage > first + 2) {
+                  pages.push(
+                    <span key="start-ellipsis" className="px-2 text-gray-400">...</span>
+                  );
+                }
+                // Previous neighbor
+                if (prev > first + 1) {
+                  pages.push(
+                    <button
+                      key={prev}
+                      onClick={() => setCurrentPage(prev)}
+                      className={`px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200 ${
+                        currentPage === prev
+                          ? 'bg-green-600 text-white shadow-lg'
+                          : 'text-gray-400 bg-gray-800 border border-gray-600 hover:bg-gray-700 hover:text-white'
+                      }`}
+                    >
+                      {prev}
+                    </button>
+                  );
+                }
+                // Current page (if not first/last)
+                if (currentPage !== first && currentPage !== last) {
+                  pages.push(
+                    <button
+                      key={currentPage}
+                      onClick={() => setCurrentPage(currentPage)}
+                      className="px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200 bg-green-600 text-white shadow-lg"
+                    >
+                      {currentPage}
+                    </button>
+                  );
+                }
+                // Next neighbor
+                if (next < last - 1) {
+                  pages.push(
+                    <button
+                      key={next}
+                      onClick={() => setCurrentPage(next)}
+                      className={`px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200 ${
+                        currentPage === next
+                          ? 'bg-green-600 text-white shadow-lg'
+                          : 'text-gray-400 bg-gray-800 border border-gray-600 hover:bg-gray-700 hover:text-white'
+                      }`}
+                    >
+                      {next}
+                    </button>
+                  );
+                }
+                // Ellipsis after
+                if (currentPage < last - 2) {
+                  pages.push(
+                    <span key="end-ellipsis" className="px-2 text-gray-400">...</span>
+                  );
+                }
+                // Last page
+                pages.push(
+                  <button
+                    key={last}
+                    onClick={() => setCurrentPage(last)}
+                    className={`px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200 ${
+                      currentPage === last
+                        ? 'bg-green-600 text-white shadow-lg'
+                        : 'text-gray-400 bg-gray-800 border border-gray-600 hover:bg-gray-700 hover:text-white'
+                    }`}
+                  >
+                    {last}
+                  </button>
+                );
+              }
+              return pages;
+            })()}
+            <button
+              onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+              disabled={currentPage === totalPages}
+              className="px-4 py-2 text-sm font-medium text-gray-500 bg-gray-800 border border-gray-600 rounded-lg hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+            >
+              Next
+            </button>
+          </nav>
+        </div>
+      )}
     </div>
   );
 };

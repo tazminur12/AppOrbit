@@ -48,7 +48,8 @@ const FeaturedProducts = () => {
   const fetchData = async () => {
     try {
       const res = await axiosSecure.get('/products?status=accepted&sort=createdAt');
-      const featured = res.data.filter(p => p.isFeatured).slice(0, 4);
+      const products = Array.isArray(res.data) ? res.data : res.data.data;
+      const featured = (products || []).filter(p => p.isFeatured).slice(0, 4);
       setProducts(featured);
     } catch (error) {
       console.error("Failed to fetch featured products:", error);

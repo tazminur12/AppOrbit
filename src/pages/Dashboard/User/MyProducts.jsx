@@ -12,35 +12,24 @@ const MyProducts = () => {
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
   const { role, roleLoading } = useUserRole();
-  console.log('Sidebar role:', role, 'roleLoading:', roleLoading, 'user:', user);
 
   useEffect(() => {
-    console.log('🎯 MyProducts component mounted');
-    console.log('👤 User in MyProducts:', user);
-    console.log('📧 User email:', user?.email);
     
     let isMounted = true;
 
     const fetchUserProducts = async () => {
       if (!user?.email) {
-        console.log('❌ No user email found, skipping fetch');
         setLoading(false);
         return;
       }
 
       try {
-        console.log('🔍 Fetching products for user:', user.email);
-        console.log('🔗 API URL:', `/products/users/${user.email}`);
         
         const res = await axiosSecure.get(`/products/users/${user.email}`);
-        console.log('📦 Products response:', res.data);
-        console.log('📊 Response type:', typeof res.data);
-        console.log('📊 Is array?', Array.isArray(res.data));
-        console.log('📊 Response length:', res.data?.length || 0);
+        
         
         if (isMounted) {
           setProducts(res.data);
-          console.log('✅ Products state updated with:', res.data);
         }
       } catch (error) {
         console.error('Error fetching user products:', error);
@@ -147,6 +136,13 @@ const MyProducts = () => {
       </div>
     );
   }
+
+  // Sort featured products to the top
+  const sortedProducts = [...products].sort((a, b) => {
+    const aFeatured = a.featured || a.isFeatured;
+    const bFeatured = b.featured || b.isFeatured;
+    return bFeatured - aFeatured;
+  });
 
   return (
     <div className="space-y-6">
@@ -256,7 +252,7 @@ const MyProducts = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-700">
-                {products.map((product) => (
+                {sortedProducts.map((product) => (
                   <tr key={product._id} className="hover:bg-gray-700 transition-colors">
                     <td className="px-6 py-4">
                       <div className="flex items-center space-x-3">
@@ -282,11 +278,15 @@ const MyProducts = () => {
                       {product.upvotes || 0}
                     </td>
                     <td className="px-6 py-4">
-                      <span className={`inline-block px-3 py-1 rounded-full text-sm font-semibold ${
-                        product.featured ? 'bg-purple-600 text-white' : 'bg-gray-500 text-white'
-                      }`}>
-                        {product.featured ? 'Featured' : 'Not Featured'}
-                      </span>
+                      {(product.featured || product.isFeatured) ? (
+                        <span className="inline-block px-3 py-1 rounded-full bg-purple-600 text-white text-xs font-semibold shadow">
+                          Featured
+                        </span>
+                      ) : (
+                        <span className="inline-block px-3 py-1 rounded-full bg-gray-700 text-gray-300 text-xs font-semibold">
+                          -
+                        </span>
+                      )}
                     </td>
                     <td className="px-6 py-4 text-gray-300">
                       {new Date(product.createdAt).toLocaleDateString()}

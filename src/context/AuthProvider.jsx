@@ -15,6 +15,19 @@ import useAxiosSecure from '../hooks/useAxiosSecure';
 const auth = getAuth(app);
 const googleProvider = new GoogleAuthProvider();
 
+// Helper to check if JWT is expired
+function isJwtExpired(token) {
+  if (!token) return true;
+  try {
+    const payload = JSON.parse(atob(token.split('.')[1]));
+    if (!payload.exp) return true;
+    // exp is in seconds, Date.now() is ms
+    return Date.now() >= payload.exp * 1000;
+  } catch {
+    return true;
+  }
+}
+
 const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -93,7 +106,11 @@ const AuthProvider = ({ children }) => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       setUser(currentUser);
       if (currentUser) {
-        await getAndStoreToken(currentUser);
+        const existingToken = localStorage.getItem('access-token');
+        // Only get/store token if not present or expired
+        if (!existingToken || isJwtExpired(existingToken)) {
+          await getAndStoreToken(currentUser);
+        }
       } else {
         localStorage.removeItem('access-token');
       }

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import useAxiosSecure from '../../../hooks/useAxiosSecure';
 import Swal from 'sweetalert2';
+import { AlertCircle, Eye, Trash2, Flag } from 'lucide-react';
 
 const ReportedContents = () => {
   const [reportedProducts, setReportedProducts] = useState([]);
@@ -18,14 +19,10 @@ const ReportedContents = () => {
     setLoading(true);
     try {
       const res = await axiosSecure.get('/products/reported');
-      console.log('Reported products response:', res.data); // Debug log
-      
-      if (Array.isArray(res.data)) {
-        setReportedProducts(res.data);
-      } else {
-        console.warn('Unexpected response format:', res.data);
-        setReportedProducts([]);
-      }
+      // Use .data if present (new backend format), otherwise fallback
+      let reported = Array.isArray(res.data) ? res.data : res.data.data;
+      reported = reported || [];
+      setReportedProducts(reported);
     } catch (error) {
       console.error('Error fetching reported products:', error);
       Swal.fire({
@@ -42,7 +39,7 @@ const ReportedContents = () => {
   };
 
   const handleViewDetails = (id) => {
-    navigate(`/product/${id}`);
+    navigate(`/products/${id}`);
   };
 
   const handleDelete = async (id, name) => {
@@ -94,83 +91,99 @@ const ReportedContents = () => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen text-gray-300">
-        <div>
-          <div className="animate-spin h-10 w-10 border-b-2 border-indigo-500 mx-auto mb-4 rounded-full"></div>
-          Loading reported products...
-        </div>
+      <div className="flex flex-col items-center justify-center min-h-[60vh] text-gray-300">
+        <div className="animate-spin h-12 w-12 border-b-2 border-indigo-500 rounded-full mb-6"></div>
+        <p className="text-lg font-semibold text-indigo-400">Loading reported products...</p>
       </div>
     );
   }
 
   if (reportedProducts.length === 0) {
     return (
-      <div className="text-center py-10 text-gray-400">
-        <p className="text-lg">No reported products</p>
-        <p className="text-sm">All products are currently clean.</p>
+      <div className="flex flex-col items-center justify-center min-h-[60vh] text-gray-400">
+        <Flag className="w-16 h-16 text-indigo-500 mb-4" />
+        <p className="text-2xl font-bold mb-2">No Reported Products</p>
+        <p className="text-base">All products are currently clean. 🎉</p>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6 p-4">
-      <header>
-        <h1 className="text-3xl font-bold text-gray-100 mb-1">Reported Contents</h1>
-        <p className="text-gray-400 mb-6">Review and manage reported products</p>
+    <div className="space-y-8 p-4 md:p-8 max-w-7xl mx-auto">
+      {/* Header */}
+      <header className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
+        <div className="flex items-center gap-3">
+          <AlertCircle className="w-8 h-8 text-red-500" />
+          <div>
+            <h1 className="text-3xl font-bold text-white mb-1">Reported Contents</h1>
+            <p className="text-gray-400 text-base">Review and manage reported products flagged by users</p>
+          </div>
+        </div>
+        <div className="bg-gradient-to-r from-red-600 to-pink-500 text-white px-4 py-2 rounded-lg font-semibold shadow-md flex items-center gap-2">
+          <Flag className="w-5 h-5" />
+          {reportedProducts.length} Reported
+        </div>
       </header>
 
-      <div className="overflow-x-auto bg-gray-800 border border-gray-700 rounded-xl">
+      <div className="overflow-x-auto bg-gradient-to-br from-gray-900 via-gray-800 to-black border border-gray-700 rounded-2xl shadow-xl">
         <table className="min-w-full text-sm text-left text-gray-300">
-          <thead className="bg-gray-700 text-gray-200">
+          <thead className="bg-gray-800 text-gray-200">
             <tr>
-              <th className="px-6 py-3">Product</th>
-              <th className="px-6 py-3">Owner</th>
-              <th className="px-6 py-3">Reports</th>
-              <th className="px-6 py-3">Status</th>
-              <th className="px-6 py-3">Date</th>
-              <th className="px-6 py-3 text-center">Actions</th>
+              <th className="px-6 py-4 font-semibold">Product</th>
+              <th className="px-6 py-4 font-semibold">Owner</th>
+              <th className="px-6 py-4 font-semibold">Reports</th>
+              <th className="px-6 py-4 font-semibold">Status</th>
+              <th className="px-6 py-4 font-semibold">Date</th>
+              <th className="px-6 py-4 text-center font-semibold">Actions</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-700">
-            {reportedProducts.map((product) => (
-              <tr key={product._id} className="hover:bg-gray-700">
+          <tbody>
+            {reportedProducts.map((product, idx) => (
+              <tr
+                key={product._id}
+                className={
+                  idx % 2 === 0
+                    ? 'bg-gray-900 hover:bg-gray-800 transition-colors'
+                    : 'bg-gray-800 hover:bg-gray-700 transition-colors'
+                }
+              >
                 <td className="px-6 py-4 flex items-center gap-3 max-w-xs">
                   <img
                     src={product.image}
                     alt={product.name}
-                    className="w-12 h-12 object-cover rounded"
+                    className="w-12 h-12 object-cover rounded shadow-md border border-gray-700"
                     onError={(e) => {
                       e.target.onerror = null;
                       e.target.src = 'https://via.placeholder.com/48?text=No+Image';
                     }}
                   />
                   <div>
-                    <p className="font-medium text-gray-100 truncate max-w-xs">{product.name}</p>
-                    <p className="text-sm text-gray-400 truncate max-w-xs">{product.description}</p>
+                    <p className="font-semibold text-white truncate max-w-xs">{product.name}</p>
+                    <p className="text-xs text-gray-400 truncate max-w-xs">{product.description}</p>
                   </div>
                 </td>
                 <td className="px-6 py-4 flex items-center gap-2">
                   <img
                     src={product.owner?.image || 'https://i.ibb.co/SsZ9LgB/user.png'}
                     alt={product.owner?.name || 'Owner'}
-                    className="w-8 h-8 rounded-full"
+                    className="w-8 h-8 rounded-full border border-gray-700"
                     onError={(e) => {
                       e.target.onerror = null;
                       e.target.src = 'https://i.ibb.co/SsZ9LgB/user.png';
                     }}
                   />
-                  <span>{product.owner?.name || 'Unknown'}</span>
+                  <span className="font-medium text-gray-200">{product.owner?.name || 'Unknown'}</span>
                 </td>
                 <td className="px-6 py-4">
                   <span
-                    className={`px-3 py-1 rounded-full text-xs font-semibold ${getSeverityClass(getReportCount(product))}`}
+                    className={`px-3 py-1 rounded-full text-xs font-semibold shadow-md ${getSeverityClass(getReportCount(product))}`}
                   >
                     {getReportCount(product)} report{getReportCount(product) > 1 ? 's' : ''}
                   </span>
                 </td>
                 <td className="px-6 py-4">
                   <span
-                    className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                    className={`px-3 py-1 rounded-full text-xs font-semibold shadow-md ${
                       product.status === 'reported'
                         ? 'bg-red-600 text-white'
                         : product.status === 'pending'
@@ -183,19 +196,21 @@ const ReportedContents = () => {
                     {product.status || 'unknown'}
                   </span>
                 </td>
-                <td className="px-6 py-4">{new Date(product.createdAt).toLocaleDateString()}</td>
+                <td className="px-6 py-4 text-gray-400">{new Date(product.createdAt).toLocaleDateString()}</td>
                 <td className="px-6 py-4 text-center space-x-2 whitespace-nowrap">
                   <button
                     onClick={() => handleViewDetails(product._id)}
-                    className="px-3 py-1 bg-indigo-600 hover:bg-indigo-700 rounded text-white text-xs"
+                    className="inline-flex items-center gap-1 px-3 py-1 bg-indigo-600 hover:bg-indigo-700 rounded text-white text-xs font-semibold shadow-md transition-all duration-150"
+                    title="View Details"
                   >
-                    View
+                    <Eye className="w-4 h-4" /> View
                   </button>
                   <button
                     onClick={() => handleDelete(product._id, product.name)}
-                    className="px-3 py-1 bg-red-600 hover:bg-red-700 rounded text-white text-xs"
+                    className="inline-flex items-center gap-1 px-3 py-1 bg-red-600 hover:bg-red-700 rounded text-white text-xs font-semibold shadow-md transition-all duration-150"
+                    title="Delete Product"
                   >
-                    Delete
+                    <Trash2 className="w-4 h-4" /> Delete
                   </button>
                 </td>
               </tr>

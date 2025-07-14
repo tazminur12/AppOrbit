@@ -16,6 +16,7 @@ import PrivateRoute from '../routes/PrivateRoute';
 import MyProfile from '../pages/Dashboard/User/MyProfile';
 import AddProduct from '../pages/Dashboard/User/AddProduct';
 import MyProducts from '../pages/Dashboard/User/MyProducts';
+import UpdateProduct from '../pages/Dashboard/User/UpdateProduct';
 // Moderator dashboard pages
 import ReviewQueue from '../pages/Dashboard/Moderator/ReviewQueue';
 import ReportedContents from '../pages/Dashboard/Moderator/ReportedContents';
@@ -48,6 +49,7 @@ const router = createBrowserRouter([
       { path: 'user/my-profile', element: <MyProfile /> },
       { path: 'user/add-product', element: <AddProduct /> },
       { path: 'user/my-products', element: <MyProducts /> },
+      { path: 'user/update-product/:id', element: <UpdateProduct /> },
       // Moderator dashboard
       { path: 'moderator/review-queue', element: <ReviewQueue /> },
       { path: 'moderator/reported-contents', element: <ReportedContents /> },

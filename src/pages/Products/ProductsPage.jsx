@@ -78,7 +78,6 @@ const ProductsPage = () => {
         }
       });
 
-      // API এর ফরম্যাট চেক করে নিচের লাইন ঠিক করো
       setProducts(response.data.data || response.data);
       const totalCount = response.data.total || response.data.length;
       setTotalPages(Math.ceil(totalCount / limit));
@@ -303,19 +302,119 @@ const ProductsPage = () => {
               >
                 Previous
               </button>
-              {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                <button
-                  key={page}
-                  onClick={() => setCurrentPage(page)}
-                  className={`px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200 ${
-                    currentPage === page
-                      ? 'bg-green-600 text-white shadow-lg'
-                      : 'text-gray-400 bg-gray-800 border border-gray-600 hover:bg-gray-700 hover:text-white'
-                  }`}
-                >
-                  {page}
-                </button>
-              ))}
+              {/* Ellipsis Pagination Logic */}
+              {(() => {
+                const pages = [];
+                const maxButtons = 5;
+                if (totalPages <= maxButtons) {
+                  for (let page = 1; page <= totalPages; page++) {
+                    pages.push(
+                      <button
+                        key={page}
+                        onClick={() => setCurrentPage(page)}
+                        className={`px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200 ${
+                          currentPage === page
+                            ? 'bg-green-600 text-white shadow-lg'
+                            : 'text-gray-400 bg-gray-800 border border-gray-600 hover:bg-gray-700 hover:text-white'
+                        }`}
+                      >
+                        {page}
+                      </button>
+                    );
+                  }
+                } else {
+                  // Always show first and last, current, and neighbors
+                  const first = 1;
+                  const last = totalPages;
+                  const prev = Math.max(currentPage - 1, first + 1);
+                  const next = Math.min(currentPage + 1, last - 1);
+                  // First page
+                  pages.push(
+                    <button
+                      key={first}
+                      onClick={() => setCurrentPage(first)}
+                      className={`px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200 ${
+                        currentPage === first
+                          ? 'bg-green-600 text-white shadow-lg'
+                          : 'text-gray-400 bg-gray-800 border border-gray-600 hover:bg-gray-700 hover:text-white'
+                      }`}
+                    >
+                      {first}
+                    </button>
+                  );
+                  // Ellipsis before
+                  if (currentPage > first + 2) {
+                    pages.push(
+                      <span key="start-ellipsis" className="px-2 text-gray-400">...</span>
+                    );
+                  }
+                  // Previous neighbor
+                  if (prev > first + 1) {
+                    pages.push(
+                      <button
+                        key={prev}
+                        onClick={() => setCurrentPage(prev)}
+                        className={`px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200 ${
+                          currentPage === prev
+                            ? 'bg-green-600 text-white shadow-lg'
+                            : 'text-gray-400 bg-gray-800 border border-gray-600 hover:bg-gray-700 hover:text-white'
+                        }`}
+                      >
+                        {prev}
+                      </button>
+                    );
+                  }
+                  // Current page (if not first/last)
+                  if (currentPage !== first && currentPage !== last) {
+                    pages.push(
+                      <button
+                        key={currentPage}
+                        onClick={() => setCurrentPage(currentPage)}
+                        className="px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200 bg-green-600 text-white shadow-lg"
+                      >
+                        {currentPage}
+                      </button>
+                    );
+                  }
+                  // Next neighbor
+                  if (next < last - 1) {
+                    pages.push(
+                      <button
+                        key={next}
+                        onClick={() => setCurrentPage(next)}
+                        className={`px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200 ${
+                          currentPage === next
+                            ? 'bg-green-600 text-white shadow-lg'
+                            : 'text-gray-400 bg-gray-800 border border-gray-600 hover:bg-gray-700 hover:text-white'
+                        }`}
+                      >
+                        {next}
+                      </button>
+                    );
+                  }
+                  // Ellipsis after
+                  if (currentPage < last - 2) {
+                    pages.push(
+                      <span key="end-ellipsis" className="px-2 text-gray-400">...</span>
+                    );
+                  }
+                  // Last page
+                  pages.push(
+                    <button
+                      key={last}
+                      onClick={() => setCurrentPage(last)}
+                      className={`px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200 ${
+                        currentPage === last
+                          ? 'bg-green-600 text-white shadow-lg'
+                          : 'text-gray-400 bg-gray-800 border border-gray-600 hover:bg-gray-700 hover:text-white'
+                      }`}
+                    >
+                      {last}
+                    </button>
+                  );
+                }
+                return pages;
+              })()}
               <button
                 onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
                 disabled={currentPage === totalPages}
