@@ -1,4 +1,5 @@
 import React, { useContext, useState, useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import AuthContext from "../../../context/AuthContext";
 import useAxiosSecure from "../../../hooks/useAxiosSecure";
 import { loadStripe } from "@stripe/stripe-js";
@@ -190,14 +191,346 @@ const MembershipForm = ({ email, onSuccess, amount }) => {
   );
 };
 
+const SSLCommerzForm = ({ email, amount }) => {
+  const axiosSecure = useAxiosSecure();
+  const [processing, setProcessing] = useState(false);
+  const [formData, setFormData] = useState({
+    customer_name: "",
+    customer_email: email,
+    customer_address: "",
+    customer_phone: "",
+    customer_city: "",
+    customer_postcode: ""
+  });
+
+  const handleInputChange = (e) => {
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value
+    });
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!formData.customer_name || !formData.customer_phone || !formData.customer_address) {
+      Swal.fire("Error", "Please fill in all required fields", "error");
+      return;
+    }
+    
+    setProcessing(true);
+    try {
+      // Use the backend API endpoint for payment initiation
+      const { data } = await axiosSecure.post("/api/payment/initiate", {
+        amount: amount,
+        name: formData.customer_name,
+        email: formData.customer_email,
+        phone: formData.customer_phone,
+        productName: "AppOrbit Verification"
+      });
+      
+      if (data.GatewayPageURL) {
+        // Show loading message
+        Swal.fire({
+          title: "Redirecting to Payment Gateway",
+          text: "Please complete your payment in the new window",
+          icon: "info",
+          showConfirmButton: false,
+          allowOutsideClick: false,
+          didOpen: () => {
+            Swal.showLoading();
+          }
+        });
+        
+        // Open SSLCommerz payment page in a new window
+        const paymentWindow = window.open(data.GatewayPageURL, '_blank', 'width=800,height=600');
+        
+        // Check if window was opened successfully
+        if (!paymentWindow) {
+          Swal.close();
+          Swal.fire("Error", "Please allow popups to proceed with payment", "error");
+          return;
+        }
+        
+        // Listen for window close event
+        const checkWindowClosed = setInterval(() => {
+          if (paymentWindow.closed) {
+            clearInterval(checkWindowClosed);
+            Swal.close();
+            // Payment will be handled by success/fail redirects from backend
+          }
+        }, 1000);
+        
+        // Stop checking after 15 minutes
+        setTimeout(() => {
+          clearInterval(checkWindowClosed);
+        }, 900000);
+        
+      } else {
+        Swal.fire("Error", "Failed to create payment session", "error");
+      }
+    } catch (err) {
+      Swal.fire("Error", err.message || "Something went wrong", "error");
+    } finally {
+      setProcessing(false);
+    }
+  };
+
+
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label className="block text-sm font-medium text-gray-400 mb-2">Full Name *</label>
+          <input
+            type="text"
+            name="customer_name"
+            value={formData.customer_name}
+            onChange={handleInputChange}
+            placeholder="Enter your full name"
+            className="w-full bg-gray-700 border border-gray-600 text-white placeholder-gray-400 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+            required
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-400 mb-2">Phone Number *</label>
+          <input
+            type="tel"
+            name="customer_phone"
+            value={formData.customer_phone}
+            onChange={handleInputChange}
+            placeholder="Enter your phone number"
+            className="w-full bg-gray-700 border border-gray-600 text-white placeholder-gray-400 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+            required
+          />
+        </div>
+        <div className="md:col-span-2">
+          <label className="block text-sm font-medium text-gray-400 mb-2">Address *</label>
+          <textarea
+            name="customer_address"
+            value={formData.customer_address}
+            onChange={handleInputChange}
+            placeholder="Enter your full address"
+            rows="3"
+            className="w-full bg-gray-700 border border-gray-600 text-white placeholder-gray-400 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+            required
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-400 mb-2">City</label>
+          <input
+            type="text"
+            name="customer_city"
+            value={formData.customer_city}
+            onChange={handleInputChange}
+            placeholder="Enter your city"
+            className="w-full bg-gray-700 border border-gray-600 text-white placeholder-gray-400 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-400 mb-2">Postal Code</label>
+          <input
+            type="text"
+            name="customer_postcode"
+            value={formData.customer_postcode}
+            onChange={handleInputChange}
+            placeholder="Enter postal code"
+            className="w-full bg-gray-700 border border-gray-600 text-white placeholder-gray-400 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+          />
+        </div>
+      </div>
+      
+            <div className="bg-gradient-to-r from-gray-800 to-gray-900 p-6 rounded-xl border border-gray-700 shadow-lg">
+        <div className="flex items-center gap-4 mb-4">
+          <div className="p-3 bg-gradient-to-r from-green-500 to-emerald-500 rounded-xl shadow-lg">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+            </svg>
+          </div>
+          <div>
+            <h4 className="text-white font-semibold text-lg">SSLCommerz Secure Payment</h4>
+            <p className="text-gray-300 text-sm">Bangladesh's leading payment gateway</p>
+          </div>
+        </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+          <div className="flex items-center gap-3 p-3 bg-gray-700/50 rounded-lg border border-gray-600">
+            <div className="p-2 bg-blue-500 rounded-lg">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+              </svg>
+            </div>
+            <div>
+              <p className="text-white font-medium text-sm">Credit/Debit Cards</p>
+              <p className="text-gray-400 text-xs">Visa, MasterCard, Amex</p>
+            </div>
+          </div>
+          
+          <div className="flex items-center gap-3 p-3 bg-gray-700/50 rounded-lg border border-gray-600">
+            <div className="p-2 bg-green-500 rounded-lg">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
+              </svg>
+            </div>
+            <div>
+              <p className="text-white font-medium text-sm">Mobile Banking</p>
+              <p className="text-gray-400 text-xs">bKash, Nagad, Rocket</p>
+            </div>
+          </div>
+          
+          <div className="flex items-center gap-3 p-3 bg-gray-700/50 rounded-lg border border-gray-600">
+            <div className="p-2 bg-purple-500 rounded-lg">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9v-9m0-9v9m0 9c-5 0-9-4-9-9s4-9 9-9" />
+              </svg>
+            </div>
+            <div>
+              <p className="text-white font-medium text-sm">Internet Banking</p>
+              <p className="text-gray-400 text-xs">All major banks</p>
+            </div>
+          </div>
+          
+          <div className="flex items-center gap-3 p-3 bg-gray-700/50 rounded-lg border border-gray-600">
+            <div className="p-2 bg-orange-500 rounded-lg">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+              </svg>
+            </div>
+            <div>
+              <p className="text-white font-medium text-sm">Secure SSL</p>
+              <p className="text-gray-400 text-xs">256-bit encryption</p>
+            </div>
+          </div>
+        </div>
+        
+        <div className="flex items-center gap-2 text-xs text-gray-400">
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+          </svg>
+          <span>Instant payment confirmation • Secure SSL encrypted • Multiple payment options</span>
+        </div>
+      </div>
+      
+      <div className="bg-gradient-to-r from-blue-900/20 to-indigo-900/20 border border-blue-600/30 rounded-xl p-6 shadow-lg">
+        <div className="flex items-start gap-4">
+          <div className="p-2 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-lg shadow-lg">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+          <div className="flex-1">
+            <h5 className="text-white font-semibold text-base mb-3">Payment Process</h5>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center text-white text-xs font-bold">1</div>
+                  <span className="text-blue-200 text-sm">Fill in your details above</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center text-white text-xs font-bold">2</div>
+                  <span className="text-blue-200 text-sm">Click "Pay with SSLCommerz" button</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center text-white text-xs font-bold">3</div>
+                  <span className="text-blue-200 text-sm">New window opens with payment options</span>
+                </div>
+              </div>
+              <div className="space-y-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center text-white text-xs font-bold">4</div>
+                  <span className="text-green-200 text-sm">Complete payment in SSLCommerz</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center text-white text-xs font-bold">5</div>
+                  <span className="text-green-200 text-sm">Close payment window when done</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center text-white text-xs font-bold">6</div>
+                  <span className="text-green-200 text-sm">Automatic redirect back to app</span>
+                </div>
+              </div>
+            </div>
+            <div className="mt-4 p-3 bg-blue-900/30 rounded-lg border border-blue-600/30">
+              <div className="flex items-center gap-2 text-blue-200 text-xs">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                </svg>
+                <span>Your payment is secure and encrypted. SSLCommerz is Bangladesh's most trusted payment gateway.</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div className="space-y-4">
+        <button
+          type="submit"
+          disabled={processing}
+          className="w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white py-4 px-6 rounded-xl font-semibold disabled:opacity-50 transition-all shadow-xl flex items-center justify-center text-lg"
+        >
+          {processing ? (
+            <>
+              <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              Processing Payment...
+            </>
+          ) : (
+            <>
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+              </svg>
+              Pay ৳${amount * 100} with SSLCommerz
+            </>
+          )}
+        </button>
+        
+        <div className="flex items-center justify-center gap-2 text-xs text-gray-400">
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+          </svg>
+          <span>Secure SSL Encrypted Payment</span>
+        </div>
+      </div>
+      
+      <div className="text-center">
+        <button
+          type="button"
+          onClick={() => {
+            Swal.fire({
+              title: "Check Payment Status",
+              text: "If you've completed payment but haven't received confirmation, click OK to check status",
+              icon: "question",
+              showCancelButton: true,
+              confirmButtonText: "Check Status",
+              cancelButtonText: "Cancel"
+            }).then((result) => {
+              if (result.isConfirmed) {
+                // This would need to be implemented to check the last payment session
+                Swal.fire("Info", "Please contact support to check your payment status.", "info");
+              }
+            });
+          }}
+          className="text-green-400 hover:text-green-300 text-sm underline"
+        >
+          Check Payment Status
+        </button>
+      </div>
+    </form>
+  );
+};
+
 const MyProfile = () => {
   const { user } = useContext(AuthContext);
   const axiosSecure = useAxiosSecure();
+  const navigate = useNavigate();
   const [membership, setMembership] = useState(null);
   const [showPayment, setShowPayment] = useState(false);
   const [discountedAmount, setDiscountedAmount] = useState(10);
   const [appliedCoupon, setAppliedCoupon] = useState(null);
   const [activeTab, setActiveTab] = useState("overview");
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState("stripe");
   
   // Settings state
   const [profileData, setProfileData] = useState({
@@ -211,7 +544,8 @@ const MyProfile = () => {
   const [photoPreview, setPhotoPreview] = useState('');
   const fileInputRef = useRef(null);
 
-  const subscriptionAmount = 50;
+  const subscriptionAmount = 50; // USD for Stripe
+  const sslcommerzAmount = 5000; // BDT for SSLCommerz
 
   const fetchUserProfile = async () => {
     if (!user?.email) return;
@@ -685,12 +1019,26 @@ const MyProfile = () => {
                       
                       <CouponSection onApplyCoupon={handleApplyCoupon} />
                       
-                      <div className="mt-8">
+                      <div className="mt-8 space-y-4">
                         <button
                           onClick={() => setShowPayment(true)}
                           className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white py-3 px-6 rounded-lg font-medium transition-all shadow-lg"
                         >
                           Get Verified for ${discountedAmount}
+                        </button>
+                        
+                        <div className="text-center">
+                          <span className="text-gray-400 text-sm">or</span>
+                        </div>
+                        
+                        <button
+                          onClick={() => navigate('/dashboard/user/sslcommerz-payment')}
+                          className="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white py-3 px-6 rounded-lg font-medium transition-all shadow-lg flex items-center justify-center gap-2"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                          </svg>
+                          Pay ৳${sslcommerzAmount} with SSLCommerz
                         </button>
                       </div>
                     </div>
@@ -813,7 +1161,7 @@ const MyProfile = () => {
           </div>
         </div>
 
-        {/* Stripe Modal */}
+        {/* Payment Modal */}
         {showPayment && (
           <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 px-4" onClick={() => setShowPayment(false)}>
             <div className="bg-gray-900 p-8 rounded-2xl border border-gray-700 shadow-xl w-full max-w-md" onClick={(e) => e.stopPropagation()}>
@@ -849,14 +1197,71 @@ const MyProfile = () => {
                   <span>${discountedAmount}</span>
                 </div>
               </div>
+
+              {/* Payment Method Selector */}
+              <div className="mb-6">
+                <h3 className="text-lg font-semibold text-white mb-4">Choose Payment Method</h3>
+                <div className="grid grid-cols-2 gap-3">
+                  <button
+                    onClick={() => setSelectedPaymentMethod("stripe")}
+                    className={`p-4 rounded-lg border-2 transition-all ${
+                      selectedPaymentMethod === "stripe"
+                        ? "border-indigo-500 bg-indigo-600/20"
+                        : "border-gray-600 bg-gray-700 hover:border-gray-500"
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                        </svg>
+                      </div>
+                      <div className="text-left">
+                        <div className="font-medium text-white">Stripe</div>
+                        <div className="text-xs text-gray-400">Credit/Debit Cards</div>
+                      </div>
+                    </div>
+                  </button>
+                  
+                  <button
+                    onClick={() => setSelectedPaymentMethod("sslcommerz")}
+                    className={`p-4 rounded-lg border-2 transition-all ${
+                      selectedPaymentMethod === "sslcommerz"
+                        ? "border-green-500 bg-green-600/20"
+                        : "border-gray-600 bg-gray-700 hover:border-gray-500"
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 bg-green-600 rounded-lg flex items-center justify-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                        </svg>
+                      </div>
+                      <div className="text-left">
+                        <div className="font-medium text-white">SSLCommerz</div>
+                        <div className="text-xs text-gray-400">Multiple Options</div>
+                      </div>
+                    </div>
+                  </button>
+                </div>
+              </div>
               
-              <Elements stripe={stripePromise}>
-                <MembershipForm
+              {/* Payment Forms */}
+              {selectedPaymentMethod === "stripe" ? (
+                <Elements stripe={stripePromise}>
+                  <MembershipForm
+                    email={user.email}
+                    onSuccess={handleSubscriptionSuccess}
+                    amount={discountedAmount}
+                  />
+                </Elements>
+              ) : (
+                <SSLCommerzForm
                   email={user.email}
                   onSuccess={handleSubscriptionSuccess}
                   amount={discountedAmount}
                 />
-              </Elements>
+              )}
               
               <div className="mt-4 flex items-center text-gray-400 text-xs">
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">

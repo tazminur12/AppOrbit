@@ -14,6 +14,9 @@ import PrivateRoute from '../routes/PrivateRoute';
 
 // User dashboard pages
 import MyProfile from '../pages/Dashboard/User/MyProfile';
+import SSLCommerzPayment from '../pages/Dashboard/User/SSLCommerzPayment';
+import PaymentSuccess from '../pages/Dashboard/User/PaymentSuccess';
+import PaymentFailed from '../pages/Dashboard/User/PaymentFailed';
 import AddProduct from '../pages/Dashboard/User/AddProduct';
 import MyProducts from '../pages/Dashboard/User/MyProducts';
 import UpdateProduct from '../pages/Dashboard/User/UpdateProduct';
@@ -47,6 +50,9 @@ const router = createBrowserRouter([
     children: [
       // User dashboard
       { path: 'user/my-profile', element: <MyProfile /> },
+      { path: 'user/sslcommerz-payment', element: <SSLCommerzPayment /> },
+      { path: 'payment/success', element: <PaymentSuccess /> },
+      { path: 'payment/fail', element: <PaymentFailed /> },
       { path: 'user/add-product', element: <AddProduct /> },
       { path: 'user/my-products', element: <MyProducts /> },
       { path: 'user/update-product/:id', element: <UpdateProduct /> },
