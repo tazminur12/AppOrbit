@@ -1,6 +1,6 @@
 import React, { useContext, useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { FaUserCircle, FaBars, FaTimes, FaChevronDown, FaHome, FaBoxOpen, FaInfoCircle, FaEnvelope, FaTachometerAlt } from 'react-icons/fa';
+import { FaBars, FaTimes, FaChevronDown, FaHome, FaBoxOpen, FaInfoCircle, FaEnvelope, FaChartLine } from 'react-icons/fa';
 import { FiHome, FiBookOpen, FiBarChart2, FiHelpCircle } from 'react-icons/fi';
 import AuthContext from '../context/AuthContext';
 
@@ -224,7 +224,7 @@ const Navbar = () => {
             </NavLinkMobile>
             <NavLinkMobile to="/dashboard" currentPath={location.pathname} onClick={handleLinkClick}>
               <span className="flex items-center gap-3 px-4 py-3 rounded-xl text-base font-semibold text-gray-100 hover:bg-indigo-900/40 hover:text-indigo-300 transition-colors w-full">
-                <FaTachometerAlt className="text-lg" /> Dashboard
+                <FaChartLine className="text-lg" /> Dashboard
               </span>
             </NavLinkMobile>
           </nav>

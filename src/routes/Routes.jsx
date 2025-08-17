@@ -13,6 +13,8 @@ import DashboardLayout from '../layouts/DashboardLayout';
 import PrivateRoute from '../routes/PrivateRoute';
 
 // User dashboard pages
+import Overview from '../pages/Dashboard/User/Overview';
+import Profile from '../pages/Dashboard/User/Profile';
 import MyProfile from '../pages/Dashboard/User/MyProfile';
 import SSLCommerzPayment from '../pages/Dashboard/User/SSLCommerzPayment';
 import PaymentSuccess from '../pages/Dashboard/User/PaymentSuccess';
@@ -24,6 +26,7 @@ import UpdateProduct from '../pages/Dashboard/User/UpdateProduct';
 import ReviewQueue from '../pages/Dashboard/Moderator/ReviewQueue';
 import ReportedContents from '../pages/Dashboard/Moderator/ReportedContents';
 // Admin dashboard pages
+import AdminOverview from '../pages/Dashboard/Admin/AdminOverview';
 import Statistics from '../pages/Dashboard/Admin/Statistics';
 import ManageUsers from '../pages/Dashboard/Admin/ManageUsers';
 import ManageCoupons from '../pages/Dashboard/Admin/ManageCoupons';
@@ -44,27 +47,31 @@ const router = createBrowserRouter([
       { path: '/animation-demo', element: <AnimationDemo /> }
     ],
   },
-  {
-    path: '/dashboard',
-    element: <PrivateRoute><DashboardLayout /></PrivateRoute>,
-    children: [
-      // User dashboard
-      { path: 'user/my-profile', element: <MyProfile /> },
-      { path: 'user/sslcommerz-payment', element: <SSLCommerzPayment /> },
-      { path: 'payment/success', element: <PaymentSuccess /> },
-      { path: 'payment/fail', element: <PaymentFailed /> },
-      { path: 'user/add-product', element: <AddProduct /> },
-      { path: 'user/my-products', element: <MyProducts /> },
-      { path: 'user/update-product/:id', element: <UpdateProduct /> },
-      // Moderator dashboard
-      { path: 'moderator/review-queue', element: <ReviewQueue /> },
-      { path: 'moderator/reported-contents', element: <ReportedContents /> },
-      // Admin dashboard
-      { path: 'admin/statistics', element: <Statistics /> },
-      { path: 'admin/manage-users', element: <ManageUsers /> },
-      { path: 'admin/manage-coupons', element: <ManageCoupons /> },
-    ],
-  },
+          {
+          path: '/dashboard',
+          element: <PrivateRoute><DashboardLayout /></PrivateRoute>,
+          children: [
+            // User dashboard
+            { path: 'user/overview', element: <Overview /> },
+            { path: 'user/profile', element: <Profile /> },
+            { path: 'user/my-profile', element: <MyProfile /> },
+            { path: 'user/sslcommerz-payment', element: <SSLCommerzPayment /> },
+            { path: 'payment/success', element: <PaymentSuccess /> },
+            { path: 'payment/fail', element: <PaymentFailed /> },
+            { path: 'user/add-product', element: <AddProduct /> },
+            { path: 'user/my-products', element: <MyProducts /> },
+            { path: 'user/update-product/:id', element: <UpdateProduct /> },
+            // Moderator dashboard
+            { path: 'moderator/overview', element: <Overview /> },
+            { path: 'moderator/review-queue', element: <ReviewQueue /> },
+            { path: 'moderator/reported-contents', element: <ReportedContents /> },
+            // Admin dashboard
+            { path: 'admin/overview', element: <AdminOverview /> },
+            { path: 'admin/statistics', element: <Statistics /> },
+            { path: 'admin/manage-users', element: <ManageUsers /> },
+            { path: 'admin/manage-coupons', element: <ManageCoupons /> },
+          ],
+        },
 ]);
 
 export default router;

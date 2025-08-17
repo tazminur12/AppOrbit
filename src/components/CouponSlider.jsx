@@ -7,7 +7,7 @@ import 'swiper/css/navigation';
 import useAxiosSecure from '../hooks/useAxiosSecure';
 import { format, isAfter } from 'date-fns';
 import { FiClock, FiPercent, FiCode } from 'react-icons/fi';
-import { FaFire, FaRegCopy } from 'react-icons/fa';
+import { FaFire, FaCopy } from 'react-icons/fa';
 import { toast } from 'react-toastify';
 
 const CouponSlider = () => {
@@ -144,7 +144,7 @@ const CouponSlider = () => {
                         className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-purple-400 transition-colors"
                         aria-label="Copy code"
                       >
-                        <FaRegCopy />
+                        <FaCopy />
                       </button>
                     </div>
                   </div>

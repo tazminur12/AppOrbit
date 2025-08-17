@@ -6,15 +6,18 @@ import { FaBars, FaTimes, FaHome } from 'react-icons/fa';
 
 const sidebarLinks = {
   user: [
-    { to: '/dashboard/user/my-profile', label: 'My Profile' },
+    { to: '/dashboard/user/overview', label: 'Overview' },
+    { to: '/dashboard/user/profile', label: 'My Profile' },
     { to: '/dashboard/user/add-product', label: 'Add Product' },
     { to: '/dashboard/user/my-products', label: 'My Products' },
   ],
   moderator: [
+    { to: '/dashboard/moderator/overview', label: 'Overview' },
     { to: '/dashboard/moderator/review-queue', label: 'Product Review Queue' },
     { to: '/dashboard/moderator/reported-contents', label: 'Reported Contents' },
   ],
   admin: [
+    { to: '/dashboard/admin/overview', label: 'Overview' },
     { to: '/dashboard/admin/statistics', label: 'Statistics' },
     { to: '/dashboard/admin/manage-users', label: 'Manage Users' },
     { to: '/dashboard/admin/manage-coupons', label: 'Manage Coupons' },
