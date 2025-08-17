@@ -1,6 +1,7 @@
 import React, { useContext, useState, useEffect } from 'react';
 import { AuthContext } from '../../../context/AuthContext';
 import useAxiosSecure from '../../../hooks/useAxiosSecure';
+import { toast } from 'react-toastify';
 import { 
   FaUsers, 
   FaBox, 
@@ -29,74 +30,188 @@ const Overview = () => {
     verificationStatus: 'pending'
   });
   
+  // Additional stats from backend
+  const [detailedStats, setDetailedStats] = useState({
+    acceptedProducts: 0,
+    pendingProducts: 0,
+    rejectedProducts: 0,
+    totalUpvotes: 0,
+    membership: 'basic',
+    joinDate: null
+  });
+  
   const [recentActivity, setRecentActivity] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  // Ensure stats object is always defined with safe defaults
+  const safeStats = stats || {
+    totalProducts: 0,
+    totalViews: 0,
+    totalLikes: 0,
+    totalReviews: 0,
+    monthlyGrowth: 0,
+    verificationStatus: 'pending'
+  };
+
+  // Ensure recentActivity is always an array
+  const safeRecentActivity = recentActivity || [];
+
   useEffect(() => {
-    fetchDashboardData();
+    if (user?.email) {
+      fetchDashboardData();
+    }
   }, [user]);
+
+  // Safety check for user object
+  if (!user || !user.email) {
+    return (
+      <div className="min-h-screen flex justify-center items-center bg-gray-900">
+        <div className="flex flex-col items-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500 mb-4"></div>
+          <p className="text-lg text-gray-300">Loading user data...</p>
+        </div>
+      </div>
+    );
+  }
 
   const fetchDashboardData = async () => {
     if (!user?.email) return;
     
     try {
       setLoading(true);
-      // Fetch user stats
+      
+      // Fetch user stats from real backend
       const statsResponse = await axiosSecure.get(`/users/stats/${user.email}`);
-      if (statsResponse.data) {
-        setStats(statsResponse.data);
+      if (statsResponse.data && statsResponse.data.success && statsResponse.data.stats) {
+        // Map backend stats to frontend format
+        const backendStats = statsResponse.data.stats;
+        
+        // Set detailed stats
+        setDetailedStats({
+          acceptedProducts: backendStats.acceptedProducts || 0,
+          pendingProducts: backendStats.pendingProducts || 0,
+          rejectedProducts: backendStats.rejectedProducts || 0,
+          totalUpvotes: backendStats.totalUpvotes || 0,
+          membership: backendStats.membership || 'basic',
+          joinDate: backendStats.joinDate || null
+        });
+        
+        setStats({
+          totalProducts: backendStats.totalProducts || 0,
+          totalViews: backendStats.totalUpvotes || 0, // Using upvotes as views for now
+          totalLikes: backendStats.totalUpvotes || 0, // Using upvotes as likes
+          totalReviews: backendStats.totalReviews || 0,
+          monthlyGrowth: 15.3, // This could be calculated from backend data later
+          verificationStatus: backendStats.membership === 'premium' ? 'verified' : 'pending'
+        });
+        toast.success('Dashboard data loaded successfully!');
+      } else {
+        console.warn('Stats response format unexpected:', statsResponse.data);
+        // Set default stats if response format is unexpected
+        setStats({
+          totalProducts: 0,
+          totalViews: 0,
+          totalLikes: 0,
+          totalReviews: 0,
+          monthlyGrowth: 0,
+          verificationStatus: 'pending'
+        });
+        toast.warning('Data format unexpected, using default values');
       }
       
-      // Fetch recent activity
+      // Fetch recent activity from real backend
       const activityResponse = await axiosSecure.get(`/users/activity/${user.email}`);
-      if (activityResponse.data) {
-        setRecentActivity(activityResponse.data);
+      if (activityResponse.data && activityResponse.data.success && Array.isArray(activityResponse.data.activities)) {
+        // Transform backend activity format to frontend format
+        const backendActivities = activityResponse.data.activities;
+        const transformedActivities = backendActivities.map((activity, index) => ({
+          id: activity.id || index + 1,
+          type: activity.type === 'product' ? 'product_added' : 
+                activity.type === 'review' ? 'review_received' : 'product_downloaded',
+          title: activity.action || 'Activity',
+          description: activity.title || 'No description',
+          timestamp: new Date(activity.date),
+          icon: activity.type === 'product' ? 'FaBox' : 
+                activity.type === 'review' ? 'FaStar' : 'FaDownload'
+        }));
+        setRecentActivity(transformedActivities);
+      } else {
+        console.warn('Activity response format unexpected:', activityResponse.data);
+        // Set empty activity if response format is unexpected
+        setRecentActivity([]);
+        toast.warning('Activity data format unexpected');
       }
+      
     } catch (error) {
       console.error('Failed to fetch dashboard data:', error);
-      // Set sample data for demonstration
-      setStats({
-        totalProducts: 12,
-        totalViews: 1247,
-        totalLikes: 89,
-        totalReviews: 23,
-        monthlyGrowth: 15.3,
-        verificationStatus: 'verified'
-      });
-      setRecentActivity([
-        {
-          id: 1,
-          type: 'product_added',
-          title: 'New Product Added',
-          description: 'Added "AI Web Development Tool" to your portfolio',
-          timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000),
-          icon: 'FaBox'
-        },
-        {
-          id: 2,
-          type: 'product_viewed',
-          title: 'Product Viewed',
-          description: 'Your product "React Dashboard Template" received 15 views',
-          timestamp: new Date(Date.now() - 4 * 60 * 60 * 1000),
-          icon: 'FaEye'
-        },
-        {
-          id: 3,
-          type: 'product_liked',
-          title: 'Product Liked',
-          description: 'Someone liked your "Mobile App UI Kit"',
-          timestamp: new Date(Date.now() - 6 * 60 * 60 * 1000),
-          icon: 'FaHeart'
-        },
-        {
-          id: 4,
-          type: 'review_received',
-          title: 'New Review',
-          description: 'Received a 5-star review for "E-commerce Template"',
-          timestamp: new Date(Date.now() - 24 * 60 * 60 * 1000),
-          icon: 'FaStar'
-        }
-      ]);
+      
+      // Handle specific error cases
+      if (error.response?.status === 404) {
+        console.log('User data not found, setting default values');
+        setStats({
+          totalProducts: 0,
+          totalViews: 0,
+          totalLikes: 0,
+          totalReviews: 0,
+          monthlyGrowth: 0,
+          verificationStatus: 'pending'
+        });
+        setRecentActivity([]);
+        toast.info('No user data found. Please add products to get started.');
+      } else if (error.response?.status === 401) {
+        console.error('Unauthorized - user token might be expired');
+        toast.error('Authentication failed. Please log in again.');
+        // You might want to redirect to login here
+      } else if (error.response?.status === 500) {
+        console.error('Server error');
+        toast.error('Server error. Please try again later.');
+      } else {
+        // For other errors, set sample data for demonstration
+        console.log('Using sample data due to backend error');
+        setStats({
+          totalProducts: 12,
+          totalViews: 1247,
+          totalLikes: 89,
+          totalReviews: 23,
+          monthlyGrowth: 15.3,
+          verificationStatus: 'verified'
+        });
+        setRecentActivity([
+          {
+            id: 1,
+            type: 'product_added',
+            title: 'New Product Added',
+            description: 'Added "AI Web Development Tool" to your portfolio',
+            timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000),
+            icon: 'FaBox'
+          },
+          {
+            id: 2,
+            type: 'product_viewed',
+            title: 'Product Viewed',
+            description: 'Your product "React Dashboard Template" received 15 views',
+            timestamp: new Date(Date.now() - 4 * 60 * 60 * 1000),
+            icon: 'FaEye'
+          },
+          {
+            id: 3,
+            type: 'product_liked',
+            title: 'Product Liked',
+            description: 'Someone liked your "Mobile App UI Kit"',
+            timestamp: new Date(Date.now() - 6 * 60 * 60 * 1000),
+            icon: 'FaHeart'
+          },
+          {
+            id: 4,
+            type: 'review_received',
+            title: 'New Review',
+            description: 'Received a 5-star review for "E-commerce Template"',
+            timestamp: new Date(Date.now() - 24 * 60 * 60 * 1000),
+            icon: 'FaStar'
+          }
+        ]);
+        toast.warning('Using sample data due to connection issues');
+      }
     } finally {
       setLoading(false);
     }
@@ -144,8 +259,10 @@ const Overview = () => {
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-10">
-          <h1 className="text-3xl sm:text-4xl font-bold text-white mb-2">Dashboard Overview</h1>
-          <p className="text-gray-400">Welcome back! Here's what's happening with your account.</p>
+          <div>
+            <h1 className="text-3xl sm:text-4xl font-bold text-white mb-2">Dashboard Overview</h1>
+            <p className="text-gray-400">Welcome back! Here's what's happening with your account.</p>
+          </div>
         </div>
 
         {/* Stats Grid */}
@@ -155,8 +272,12 @@ const Overview = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-blue-300 text-sm font-medium">Total Products</p>
-                <p className="text-3xl font-bold text-white">{stats.totalProducts}</p>
-                <p className="text-blue-200 text-sm mt-1">+2 this month</p>
+                <p className="text-3xl font-bold text-white">{safeStats.totalProducts}</p>
+                {safeStats.totalProducts === 0 ? (
+                  <p className="text-blue-200 text-sm mt-1">Start by adding your first product</p>
+                ) : (
+                  <p className="text-blue-200 text-sm mt-1">+2 this month</p>
+                )}
               </div>
               <div className="p-3 bg-blue-600/20 rounded-lg">
                 <FaBox className="w-8 h-8 text-blue-300" />
@@ -169,8 +290,12 @@ const Overview = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-green-300 text-sm font-medium">Total Views</p>
-                <p className="text-3xl font-bold text-white">{stats.totalViews.toLocaleString()}</p>
-                <p className="text-green-200 text-sm mt-1">+{Math.floor(stats.totalViews * 0.12)} this week</p>
+                <p className="text-3xl font-bold text-white">{safeStats.totalViews.toLocaleString()}</p>
+                {safeStats.totalViews === 0 ? (
+                  <p className="text-green-200 text-sm mt-1">No views yet</p>
+                ) : (
+                  <p className="text-green-200 text-sm mt-1">+{Math.floor(safeStats.totalViews * 0.12)} this week</p>
+                )}
               </div>
               <div className="p-3 bg-green-600/20 rounded-lg">
                 <FaEye className="w-8 h-8 text-green-300" />
@@ -183,8 +308,12 @@ const Overview = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-pink-300 text-sm font-medium">Total Likes</p>
-                <p className="text-3xl font-bold text-white">{stats.totalLikes}</p>
-                <p className="text-pink-200 text-sm mt-1">+{Math.floor(stats.totalLikes * 0.08)} this week</p>
+                <p className="text-3xl font-bold text-white">{safeStats.totalLikes}</p>
+                {safeStats.totalLikes === 0 ? (
+                  <p className="text-pink-200 text-sm mt-1">No likes yet</p>
+                ) : (
+                  <p className="text-pink-200 text-sm mt-1">+{Math.floor(safeStats.totalLikes * 0.08)} this week</p>
+                )}
               </div>
               <div className="p-3 bg-pink-600/20 rounded-lg">
                 <FaHeart className="w-8 h-8 text-pink-300" />
@@ -197,8 +326,12 @@ const Overview = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-yellow-300 text-sm font-medium">Total Reviews</p>
-                <p className="text-3xl font-bold text-white">{stats.totalReviews}</p>
-                <p className="text-yellow-200 text-sm mt-1">+{Math.floor(stats.totalReviews * 0.15)} this month</p>
+                <p className="text-3xl font-bold text-white">{safeStats.totalReviews}</p>
+                {safeStats.totalReviews === 0 ? (
+                  <p className="text-yellow-200 text-sm mt-1">No reviews yet</p>
+                ) : (
+                  <p className="text-yellow-200 text-sm mt-1">+{Math.floor(safeStats.totalReviews * 0.15)} this month</p>
+                )}
               </div>
               <div className="p-3 bg-yellow-600/20 rounded-lg">
                 <FaStar className="w-8 h-8 text-yellow-300" />
@@ -215,7 +348,7 @@ const Overview = () => {
               <h3 className="text-xl font-semibold text-white">Monthly Growth</h3>
               <div className="flex items-center gap-2 text-green-400">
                 <FaArrowUp className="w-4 h-4" />
-                <span className="text-sm font-medium">+{stats.monthlyGrowth}%</span>
+                <span className="text-sm font-medium">+{safeStats.monthlyGrowth}%</span>
               </div>
             </div>
             
@@ -240,16 +373,12 @@ const Overview = () => {
             </div>
           </div>
 
-          {/* Verification Status */}
+          {/* Product Status Breakdown */}
           <div className="bg-gray-800 rounded-xl p-6 border border-gray-700 shadow-lg">
             <div className="flex items-center justify-between mb-6">
-              <h3 className="text-xl font-semibold text-white">Account Status</h3>
-              <div className={`px-3 py-1 rounded-full text-xs font-medium ${
-                stats.verificationStatus === 'verified' 
-                  ? 'bg-green-600 text-white' 
-                  : 'bg-yellow-600 text-white'
-              }`}>
-                {stats.verificationStatus === 'verified' ? 'Verified' : 'Pending'}
+              <h3 className="text-xl font-semibold text-white">Product Status</h3>
+              <div className="text-sm text-gray-400">
+                Total: {detailedStats.acceptedProducts + detailedStats.pendingProducts + detailedStats.rejectedProducts}
               </div>
             </div>
             
@@ -257,53 +386,117 @@ const Overview = () => {
               <div className="flex items-center justify-between p-4 bg-gray-700 rounded-lg">
                 <div className="flex items-center gap-3">
                   <div className="p-2 bg-green-600/20 rounded-lg">
-                    <FaShieldAlt className="w-5 h-5 text-green-400" />
+                    <FaBox className="w-5 h-5 text-green-400" />
                   </div>
                   <div>
-                    <p className="text-white font-medium">Verification</p>
-                    <p className="text-gray-400 text-sm">Account verification status</p>
+                    <p className="text-white font-medium">Accepted</p>
+                    <p className="text-gray-400 text-sm">Products approved</p>
                   </div>
                 </div>
                 <div className="text-right">
-                  <p className="text-white font-semibold">
-                    {stats.verificationStatus === 'verified' ? 'Completed' : 'In Progress'}
-                  </p>
-                  <p className="text-gray-400 text-sm">
-                    {stats.verificationStatus === 'verified' ? '100%' : '75%'}
-                  </p>
+                  <p className="text-white font-semibold">{detailedStats.acceptedProducts}</p>
+                  <p className="text-green-400 text-sm">Active</p>
                 </div>
               </div>
               
               <div className="flex items-center justify-between p-4 bg-gray-700 rounded-lg">
                 <div className="flex items-center gap-3">
-                  <div className="p-2 bg-blue-600/20 rounded-lg">
-                    <FaUsers className="w-5 h-5 text-blue-400" />
+                  <div className="p-2 bg-yellow-600/20 rounded-lg">
+                    <FaBox className="w-5 h-5 text-yellow-400" />
                   </div>
                   <div>
-                    <p className="text-white font-medium">Profile Completion</p>
-                    <p className="text-gray-400 text-sm">Profile information filled</p>
+                    <p className="text-white font-medium">Pending</p>
+                    <p className="text-gray-400 text-sm">Under review</p>
                   </div>
                 </div>
                 <div className="text-right">
-                  <p className="text-white font-semibold">85%</p>
-                  <p className="text-gray-400 text-sm">Complete</p>
+                  <p className="text-white font-semibold">{detailedStats.pendingProducts}</p>
+                  <p className="text-yellow-400 text-sm">Reviewing</p>
                 </div>
               </div>
               
               <div className="flex items-center justify-between p-4 bg-gray-700 rounded-lg">
                 <div className="flex items-center gap-3">
-                  <div className="p-2 bg-purple-600/20 rounded-lg">
-                    <FaChartLine className="w-5 h-5 text-purple-400" />
+                  <div className="p-2 bg-red-600/20 rounded-lg">
+                    <FaBox className="w-5 h-5 text-red-400" />
                   </div>
                   <div>
-                    <p className="text-white font-medium">Performance</p>
-                    <p className="text-gray-400 text-sm">Overall account performance</p>
+                    <p className="text-white font-medium">Rejected</p>
+                    <p className="text-gray-400 text-sm">Needs revision</p>
                   </div>
                 </div>
                 <div className="text-right">
-                  <p className="text-white font-semibold">92%</p>
-                  <p className="text-gray-400 text-sm">Excellent</p>
+                  <p className="text-white font-semibold">{detailedStats.rejectedProducts}</p>
+                  <p className="text-red-400 text-sm">Rejected</p>
                 </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Account Status Section */}
+        <div className="mb-8 bg-gray-800 rounded-xl p-6 border border-gray-700 shadow-lg">
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="text-xl font-semibold text-white">Account Status</h3>
+            <div className={`px-3 py-1 rounded-full text-xs font-medium ${
+              safeStats.verificationStatus === 'verified' 
+                ? 'bg-green-600 text-white' 
+                : 'bg-yellow-600 text-white'
+            }`}>
+              {safeStats.verificationStatus === 'verified' ? 'Premium' : 'Basic'}
+            </div>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="flex items-center justify-between p-4 bg-gray-700 rounded-lg">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-green-600/20 rounded-lg">
+                  <FaShieldAlt className="w-5 h-5 text-green-400" />
+                </div>
+                <div>
+                  <p className="text-white font-medium">Membership</p>
+                  <p className="text-gray-400 text-sm">Current plan</p>
+                </div>
+              </div>
+              <div className="text-right">
+                <p className="text-white font-semibold capitalize">{detailedStats.membership}</p>
+                <p className="text-gray-400 text-sm">
+                  {detailedStats.membership === 'premium' ? 'Premium' : 'Basic'}
+                </p>
+              </div>
+            </div>
+            
+            <div className="flex items-center justify-between p-4 bg-gray-700 rounded-lg">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-blue-600/20 rounded-lg">
+                  <FaUsers className="w-5 h-5 text-blue-400" />
+                </div>
+                <div>
+                  <p className="text-white font-medium">Member Since</p>
+                  <p className="text-gray-400 text-sm">Join date</p>
+                </div>
+              </div>
+              <div className="text-right">
+                <p className="text-white font-semibold">
+                  {detailedStats.joinDate ? new Date(detailedStats.joinDate).toLocaleDateString() : 'N/A'}
+                </p>
+                <p className="text-gray-400 text-sm">Active</p>
+              </div>
+            </div>
+            
+            <div className="flex items-center justify-between p-4 bg-gray-700 rounded-lg">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-purple-600/20 rounded-lg">
+                  <FaChartLine className="w-5 h-5 text-purple-400" />
+                </div>
+                <div>
+                  <p className="text-white font-medium">Total Upvotes</p>
+                  <p className="text-gray-400 text-sm">Received likes</p>
+                </div>
+              </div>
+              <div className="text-right">
+                <p className="text-white font-semibold">{detailedStats.totalUpvotes}</p>
+                <p className="text-gray-400 text-sm">Received</p>
               </div>
             </div>
           </div>
@@ -318,22 +511,32 @@ const Overview = () => {
             </button>
           </div>
           
-          <div className="space-y-4">
-            {recentActivity.map((activity) => (
-              <div key={activity.id} className="flex items-start gap-4 p-4 bg-gray-700 rounded-lg border border-gray-600">
-                <div className={`p-2 rounded-lg ${getActivityColor(activity.type)}`}>
-                  {getActivityIcon(activity.icon)}
-                </div>
-                <div className="flex-1">
-                  <h4 className="text-white font-medium">{activity.title}</h4>
-                  <p className="text-gray-400 text-sm">{activity.description}</p>
-                  <p className="text-gray-500 text-xs mt-1">
-                    {activity.timestamp.toLocaleString()}
-                  </p>
-                </div>
+          {safeRecentActivity.length === 0 ? (
+            <div className="text-center py-8">
+              <div className="w-16 h-16 mx-auto mb-4 bg-gray-700 rounded-full flex items-center justify-center">
+                <FaComments className="w-8 h-8 text-gray-400" />
               </div>
-            ))}
-          </div>
+              <p className="text-gray-400 text-lg mb-2">No Recent Activity</p>
+              <p className="text-gray-500 text-sm">Your activity will appear here once you start using the platform</p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {safeRecentActivity.map((activity) => (
+                <div key={activity.id} className="flex items-start gap-4 p-4 bg-gray-700 rounded-lg border border-gray-600">
+                  <div className={`p-2 rounded-lg ${getActivityColor(activity.type)}`}>
+                    {getActivityIcon(activity.icon)}
+                  </div>
+                  <div className="flex-1">
+                    <h4 className="text-white font-medium">{activity.title}</h4>
+                    <p className="text-gray-400 text-sm">{activity.description}</p>
+                    <p className="text-gray-500 text-xs mt-1">
+                      {activity.timestamp.toLocaleString()}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Quick Actions */}

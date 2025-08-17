@@ -20,6 +20,24 @@ import {
   FaDollarSign
 } from 'react-icons/fa';
 
+/*
+  Expected Backend Endpoints for Admin Dashboard:
+  
+  1. GET /admin/stats
+     Response: { success: true, stats: { totalUsers, totalProducts, totalViews, totalRevenue, monthlyGrowth, pendingVerifications, activeUsers, newUsersThisMonth } }
+  
+  2. GET /admin/users/stats  
+     Response: { success: true, stats: { verifiedUsers, unverifiedUsers, premiumUsers, freeUsers } }
+  
+  3. GET /admin/products/stats
+     Response: { success: true, stats: { publishedProducts, pendingReview, rejectedProducts, topCategories: [{ name, count, percentage }] } }
+  
+  4. GET /admin/activity
+     Response: { success: true, activities: [{ id, type, title, description, timestamp, icon }] }
+  
+  Note: These endpoints should require admin role verification
+*/
+
 const AdminOverview = () => {
   const { user } = useContext(AuthContext);
   const axiosSecure = useAxiosSecure();
@@ -52,114 +70,311 @@ const AdminOverview = () => {
   const [recentActivity, setRecentActivity] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  // Ensure all stats objects are always defined with safe defaults
+  const safeStats = stats || {
+    totalUsers: 0,
+    totalProducts: 0,
+    totalViews: 0,
+    totalRevenue: 0,
+    monthlyGrowth: 0,
+    pendingVerifications: 0,
+    activeUsers: 0,
+    newUsersThisMonth: 0
+  };
+
+  const safeUserStats = userStats || {
+    verifiedUsers: 0,
+    unverifiedUsers: 0,
+    premiumUsers: 0,
+    freeUsers: 0
+  };
+
+  const safeProductStats = productStats || {
+    publishedProducts: 0,
+    pendingReview: 0,
+    rejectedProducts: 0,
+    topCategories: []
+  };
+
+  const safeRecentActivity = recentActivity || [];
+
   useEffect(() => {
-    fetchAdminData();
+    if (user?.email) {
+      fetchAdminData();
+    }
   }, [user]);
+
+  // Safety check for user object
+  if (!user || !user.email) {
+    return (
+      <div className="min-h-screen flex justify-center items-center bg-gray-900">
+        <div className="flex flex-col items-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500 mb-4"></div>
+          <p className="text-lg text-gray-300">Loading admin data...</p>
+        </div>
+      </div>
+    );
+  }
 
   const fetchAdminData = async () => {
     if (!user?.email) return;
     
     try {
       setLoading(true);
-      // Fetch admin stats
+      
+      // Fetch admin stats from backend
       const statsResponse = await axiosSecure.get('/admin/stats');
-      if (statsResponse.data) {
-        setStats(statsResponse.data);
+      if (statsResponse.data && statsResponse.data.success && statsResponse.data.stats) {
+        const backendStats = statsResponse.data.stats;
+        setStats({
+          totalUsers: backendStats.totalUsers || 0,
+          totalProducts: backendStats.totalProducts || 0,
+          totalViews: backendStats.totalViews || 0,
+          totalRevenue: backendStats.totalRevenue || 0,
+          monthlyGrowth: backendStats.monthlyGrowth || 0,
+          pendingVerifications: backendStats.pendingVerifications || 0,
+          activeUsers: backendStats.activeUsers || 0,
+          newUsersThisMonth: backendStats.newUsersThisMonth || 0
+        });
+      } else {
+        console.warn('Admin stats response format unexpected:', statsResponse.data);
+        // Set default stats if response format is unexpected
+        setStats({
+          totalUsers: 0,
+          totalProducts: 0,
+          totalViews: 0,
+          totalRevenue: 0,
+          monthlyGrowth: 0,
+          pendingVerifications: 0,
+          activeUsers: 0,
+          newUsersThisMonth: 0
+        });
       }
       
-      // Fetch user statistics
+      // Fetch user statistics from backend
       const userResponse = await axiosSecure.get('/admin/users/stats');
-      if (userResponse.data) {
-        setUserStats(userResponse.data);
+      if (userResponse.data && userResponse.data.success && userResponse.data.stats) {
+        const backendUserStats = userResponse.data.stats;
+        setUserStats({
+          verifiedUsers: backendUserStats.verifiedUsers || 0,
+          unverifiedUsers: backendUserStats.unverifiedUsers || 0,
+          premiumUsers: backendUserStats.premiumUsers || 0,
+          freeUsers: backendUserStats.freeUsers || 0
+        });
+      } else {
+        console.warn('User stats response format unexpected:', userResponse.data);
+        setUserStats({
+          verifiedUsers: 0,
+          unverifiedUsers: 0,
+          premiumUsers: 0,
+          freeUsers: 0
+        });
       }
       
-      // Fetch product statistics
+      // Fetch product statistics from backend
       const productResponse = await axiosSecure.get('/admin/products/stats');
-      if (productResponse.data) {
-        setProductStats(productResponse.data);
+      if (productResponse.data && productResponse.data.success && productResponse.data.stats) {
+        const backendProductStats = productResponse.data.stats;
+        setProductStats({
+          publishedProducts: backendProductStats.publishedProducts || 0,
+          pendingReview: backendProductStats.pendingReview || 0,
+          rejectedProducts: backendProductStats.rejectedProducts || 0,
+          topCategories: backendProductStats.topCategories || []
+        });
+      } else {
+        console.warn('Product stats response format unexpected:', productResponse.data);
+        setProductStats({
+          publishedProducts: 0,
+          pendingReview: 0,
+          rejectedProducts: 0,
+          topCategories: []
+        });
       }
       
-      // Fetch recent activity
+      // Fetch recent activity from backend
       const activityResponse = await axiosSecure.get('/admin/activity');
-      if (activityResponse.data) {
-        setRecentActivity(activityResponse.data);
+      if (activityResponse.data && activityResponse.data.success && Array.isArray(activityResponse.data.activities)) {
+        const backendActivities = activityResponse.data.activities;
+        const transformedActivities = backendActivities.map((activity, index) => ({
+          id: activity.id || index + 1,
+          type: activity.type || 'general',
+          title: activity.title || 'Activity',
+          description: activity.description || 'No description',
+          timestamp: new Date(activity.timestamp || activity.date || Date.now()),
+          icon: activity.icon || 'FaBox'
+        }));
+        setRecentActivity(transformedActivities);
+      } else {
+        console.warn('Activity response format unexpected:', activityResponse.data);
+        setRecentActivity([]);
       }
+      
     } catch (error) {
       console.error('Failed to fetch admin data:', error);
-      // Set sample data for demonstration
-      setStats({
-        totalUsers: 1247,
-        totalProducts: 892,
-        totalViews: 45678,
-        totalRevenue: 12450,
-        monthlyGrowth: 23.5,
-        pendingVerifications: 23,
-        activeUsers: 892,
-        newUsersThisMonth: 156
-      });
       
-      setUserStats({
-        verifiedUsers: 892,
-        unverifiedUsers: 355,
-        premiumUsers: 567,
-        freeUsers: 680
-      });
-      
-      setProductStats({
-        publishedProducts: 756,
-        pendingReview: 23,
-        rejectedProducts: 12,
-        topCategories: [
-          { name: 'Web Templates', count: 234, percentage: 31 },
-          { name: 'Mobile Apps', count: 189, percentage: 25 },
-          { name: 'UI Kits', count: 156, percentage: 21 },
-          { name: 'Plugins', count: 89, percentage: 12 },
-          { name: 'Others', count: 68, percentage: 9 }
-        ]
-      });
-      
-      setRecentActivity([
-        {
-          id: 1,
-          type: 'user_verified',
-          title: 'User Verification Completed',
-          description: 'John Doe completed account verification',
-          timestamp: new Date(Date.now() - 30 * 60 * 1000),
-          icon: 'FaCheckCircle'
-        },
-        {
-          id: 2,
-          type: 'product_approved',
-          title: 'Product Approved',
-          description: 'React Dashboard Template approved for publication',
-          timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000),
-          icon: 'FaCheckCircle'
-        },
-        {
-          id: 3,
-          type: 'user_registered',
-          title: 'New User Registration',
-          description: 'Sarah Wilson joined the platform',
-          timestamp: new Date(Date.now() - 4 * 60 * 60 * 1000),
-          icon: 'FaUsers'
-        },
-        {
-          id: 4,
-          type: 'product_reported',
-          title: 'Product Reported',
-          description: 'Mobile App UI Kit reported for review',
-          timestamp: new Date(Date.now() - 6 * 60 * 60 * 1000),
-          icon: 'FaExclamationTriangle'
-        },
-        {
-          id: 5,
-          type: 'payment_received',
-          title: 'Payment Received',
-          description: 'Verification fee received from user@example.com',
-          timestamp: new Date(Date.now() - 8 * 60 * 60 * 1000),
-          icon: 'FaDollarSign'
-        }
-      ]);
+      // Handle specific error cases
+      if (error.response?.status === 404) {
+        console.log('Admin endpoints not found, using default data');
+        // Set sample data for demonstration when admin endpoints don't exist
+        setStats({
+          totalUsers: 1247,
+          totalProducts: 892,
+          totalViews: 45678,
+          totalRevenue: 12450,
+          monthlyGrowth: 23.5,
+          pendingVerifications: 23,
+          activeUsers: 892,
+          newUsersThisMonth: 156
+        });
+        
+        setUserStats({
+          verifiedUsers: 892,
+          unverifiedUsers: 355,
+          premiumUsers: 567,
+          freeUsers: 680
+        });
+        
+        setProductStats({
+          publishedProducts: 756,
+          pendingReview: 23,
+          rejectedProducts: 12,
+          topCategories: [
+            { name: 'Web Templates', count: 234, percentage: 31 },
+            { name: 'Mobile Apps', count: 189, percentage: 25 },
+            { name: 'UI Kits', count: 156, percentage: 21 },
+            { name: 'Plugins', count: 89, percentage: 12 },
+            { name: 'Others', count: 68, percentage: 9 }
+          ]
+        });
+        
+        setRecentActivity([
+          {
+            id: 1,
+            type: 'user_verified',
+            title: 'User Verification Completed',
+            description: 'John Doe completed account verification',
+            timestamp: new Date(Date.now() - 30 * 60 * 1000),
+            icon: 'FaCheckCircle'
+          },
+          {
+            id: 2,
+            type: 'product_approved',
+            title: 'Product Approved',
+            description: 'React Dashboard Template approved for publication',
+            timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000),
+            icon: 'FaCheckCircle'
+          },
+          {
+            id: 3,
+            type: 'user_registered',
+            title: 'New User Registration',
+            description: 'Sarah Wilson joined the platform',
+            timestamp: new Date(Date.now() - 4 * 60 * 60 * 1000),
+            icon: 'FaUsers'
+          },
+          {
+            id: 4,
+            type: 'product_reported',
+            title: 'Product Reported',
+            description: 'Mobile App UI Kit reported for review',
+            timestamp: new Date(Date.now() - 6 * 60 * 60 * 1000),
+            icon: 'FaExclamationTriangle'
+          },
+          {
+            id: 5,
+            type: 'payment_received',
+            title: 'Payment Received',
+            description: 'Verification fee received from user@example.com',
+            timestamp: new Date(Date.now() - 8 * 60 * 60 * 1000),
+            icon: 'FaDollarSign'
+          }
+        ]);
+      } else if (error.response?.status === 401) {
+        console.error('Unauthorized - admin access required');
+        // You might want to redirect to login or show access denied
+      } else if (error.response?.status === 403) {
+        console.error('Forbidden - admin privileges required');
+        // You might want to redirect to user dashboard
+      } else if (error.response?.status === 500) {
+        console.error('Server error');
+        // Set default data for server errors
+      } else {
+        // For other errors, set sample data for demonstration
+        console.log('Using sample data due to backend error');
+        setStats({
+          totalUsers: 1247,
+          totalProducts: 892,
+          totalViews: 45678,
+          totalRevenue: 12450,
+          monthlyGrowth: 23.5,
+          pendingVerifications: 23,
+          activeUsers: 892,
+          newUsersThisMonth: 156
+        });
+        
+        setUserStats({
+          verifiedUsers: 892,
+          unverifiedUsers: 355,
+          premiumUsers: 567,
+          freeUsers: 680
+        });
+        
+        setProductStats({
+          publishedProducts: 756,
+          pendingReview: 23,
+          rejectedProducts: 12,
+          topCategories: [
+            { name: 'Web Templates', count: 234, percentage: 31 },
+            { name: 'Mobile Apps', count: 189, percentage: 25 },
+            { name: 'UI Kits', count: 156, percentage: 21 },
+            { name: 'Plugins', count: 89, percentage: 12 },
+            { name: 'Others', count: 68, percentage: 9 }
+          ]
+        });
+        
+        setRecentActivity([
+          {
+            id: 1,
+            type: 'user_verified',
+            title: 'User Verification Completed',
+            description: 'John Doe completed account verification',
+            timestamp: new Date(Date.now() - 30 * 60 * 1000),
+            icon: 'FaCheckCircle'
+          },
+          {
+            id: 2,
+            type: 'product_approved',
+            title: 'Product Approved',
+            description: 'React Dashboard Template approved for publication',
+            timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000),
+            icon: 'FaCheckCircle'
+          },
+          {
+            id: 3,
+            type: 'user_registered',
+            title: 'New User Registration',
+            description: 'Sarah Wilson joined the platform',
+            timestamp: new Date(Date.now() - 4 * 60 * 60 * 1000),
+            icon: 'FaUsers'
+          },
+          {
+            id: 4,
+            type: 'product_reported',
+            title: 'Product Reported',
+            description: 'Mobile App UI Kit reported for review',
+            timestamp: new Date(Date.now() - 6 * 60 * 60 * 1000),
+            icon: 'FaExclamationTriangle'
+          },
+          {
+            id: 5,
+            type: 'payment_received',
+            title: 'Payment Received',
+            description: 'Verification fee received from user@example.com',
+            timestamp: new Date(Date.now() - 8 * 60 * 60 * 1000),
+            icon: 'FaDollarSign'
+          }
+        ]);
+      }
     } finally {
       setLoading(false);
     }
@@ -217,8 +432,8 @@ const AdminOverview = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-blue-300 text-sm font-medium">Total Users</p>
-                <p className="text-3xl font-bold text-white">{stats.totalUsers.toLocaleString()}</p>
-                <p className="text-blue-200 text-sm mt-1">+{stats.newUsersThisMonth} this month</p>
+                <p className="text-3xl font-bold text-white">{safeStats.totalUsers.toLocaleString()}</p>
+                <p className="text-blue-200 text-sm mt-1">+{safeStats.newUsersThisMonth} this month</p>
               </div>
               <div className="p-3 bg-blue-600/20 rounded-lg">
                 <FaUsers className="w-8 h-8 text-blue-300" />
@@ -231,8 +446,8 @@ const AdminOverview = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-green-300 text-sm font-medium">Total Products</p>
-                <p className="text-3xl font-bold text-white">{stats.totalProducts.toLocaleString()}</p>
-                <p className="text-green-200 text-sm mt-1">{productStats.pendingReview} pending review</p>
+                <p className="text-3xl font-bold text-white">{safeStats.totalProducts.toLocaleString()}</p>
+                <p className="text-green-200 text-sm mt-1">{safeProductStats.pendingReview} pending review</p>
               </div>
               <div className="p-3 bg-green-600/20 rounded-lg">
                 <FaBox className="w-8 h-8 text-green-300" />
@@ -245,8 +460,8 @@ const AdminOverview = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-purple-300 text-sm font-medium">Total Views</p>
-                <p className="text-3xl font-bold text-white">{stats.totalViews.toLocaleString()}</p>
-                <p className="text-purple-200 text-sm mt-1">+{Math.floor(stats.totalViews * 0.08)} this week</p>
+                <p className="text-3xl font-bold text-white">{safeStats.totalViews.toLocaleString()}</p>
+                <p className="text-purple-200 text-sm mt-1">+{Math.floor(safeStats.totalViews * 0.08)} this week</p>
               </div>
               <div className="p-3 bg-purple-600/20 rounded-lg">
                 <FaEye className="w-8 h-8 text-purple-300" />
@@ -259,8 +474,8 @@ const AdminOverview = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-emerald-300 text-sm font-medium">Total Revenue</p>
-                <p className="text-3xl font-bold text-white">${stats.totalRevenue.toLocaleString()}</p>
-                <p className="text-emerald-200 text-sm mt-1">+{stats.monthlyGrowth}% this month</p>
+                <p className="text-3xl font-bold text-white">${safeStats.totalRevenue.toLocaleString()}</p>
+                <p className="text-emerald-200 text-sm mt-1">+{safeStats.monthlyGrowth}% this month</p>
               </div>
               <div className="p-3 bg-emerald-600/20 rounded-lg">
                 <FaDollarSign className="w-8 h-8 text-emerald-300" />
@@ -284,9 +499,9 @@ const AdminOverview = () => {
                   <span className="text-white text-sm">Verified Users</span>
                 </div>
                 <div className="text-right">
-                  <p className="text-white font-semibold">{userStats.verifiedUsers}</p>
+                  <p className="text-white font-semibold">{safeUserStats.verifiedUsers}</p>
                   <p className="text-gray-400 text-xs">
-                    {Math.round((userStats.verifiedUsers / stats.totalUsers) * 100)}%
+                    {safeStats.totalUsers > 0 ? Math.round((safeUserStats.verifiedUsers / safeStats.totalUsers) * 100) : 0}%
                   </p>
                 </div>
               </div>
@@ -299,9 +514,9 @@ const AdminOverview = () => {
                   <span className="text-white text-sm">Unverified Users</span>
                 </div>
                 <div className="text-right">
-                  <p className="text-white font-semibold">{userStats.unverifiedUsers}</p>
+                  <p className="text-white font-semibold">{safeUserStats.unverifiedUsers}</p>
                   <p className="text-gray-400 text-xs">
-                    {Math.round((userStats.unverifiedUsers / stats.totalUsers) * 100)}%
+                    {safeStats.totalUsers > 0 ? Math.round((safeUserStats.unverifiedUsers / safeStats.totalUsers) * 100) : 0}%
                   </p>
                 </div>
               </div>
@@ -314,9 +529,9 @@ const AdminOverview = () => {
                   <span className="text-white text-sm">Premium Users</span>
                 </div>
                 <div className="text-right">
-                  <p className="text-white font-semibold">{userStats.premiumUsers}</p>
+                  <p className="text-white font-semibold">{safeUserStats.premiumUsers}</p>
                   <p className="text-gray-400 text-xs">
-                    {Math.round((userStats.premiumUsers / stats.totalUsers) * 100)}%
+                    {safeStats.totalUsers > 0 ? Math.round((safeUserStats.premiumUsers / safeStats.totalUsers) * 100) : 0}%
                   </p>
                 </div>
               </div>
@@ -329,9 +544,9 @@ const AdminOverview = () => {
                   <span className="text-white text-sm">Free Users</span>
                 </div>
                 <div className="text-right">
-                  <p className="text-white font-semibold">{userStats.freeUsers}</p>
+                  <p className="text-white font-semibold">{safeUserStats.freeUsers}</p>
                   <p className="text-gray-400 text-xs">
-                    {Math.round((userStats.freeUsers / stats.totalUsers) * 100)}%
+                    {safeStats.totalUsers > 0 ? Math.round((safeUserStats.freeUsers / safeStats.totalUsers) * 100) : 0}%
                   </p>
                 </div>
               </div>
@@ -351,9 +566,9 @@ const AdminOverview = () => {
                   <span className="text-white text-sm">Published</span>
                 </div>
                 <div className="text-right">
-                  <p className="text-white font-semibold">{productStats.publishedProducts}</p>
+                  <p className="text-white font-semibold">{safeProductStats.publishedProducts}</p>
                   <p className="text-gray-400 text-xs">
-                    {Math.round((productStats.publishedProducts / stats.totalProducts) * 100)}%
+                    {safeStats.totalProducts > 0 ? Math.round((safeProductStats.publishedProducts / safeStats.totalProducts) * 100) : 0}%
                   </p>
                 </div>
               </div>
@@ -366,9 +581,9 @@ const AdminOverview = () => {
                   <span className="text-white text-sm">Pending Review</span>
                 </div>
                 <div className="text-right">
-                  <p className="text-white font-semibold">{productStats.pendingReview}</p>
+                  <p className="text-white font-semibold">{safeProductStats.pendingReview}</p>
                   <p className="text-gray-400 text-xs">
-                    {Math.round((productStats.pendingReview / stats.totalProducts) * 100)}%
+                    {safeStats.totalProducts > 0 ? Math.round((safeProductStats.pendingReview / safeStats.totalProducts) * 100) : 0}%
                   </p>
                 </div>
               </div>
@@ -381,9 +596,9 @@ const AdminOverview = () => {
                   <span className="text-white text-sm">Rejected</span>
                 </div>
                 <div className="text-right">
-                  <p className="text-white font-semibold">{productStats.rejectedProducts}</p>
+                  <p className="text-white font-semibold">{safeProductStats.rejectedProducts}</p>
                   <p className="text-gray-400 text-xs">
-                    {Math.round((productStats.rejectedProducts / stats.totalProducts) * 100)}%
+                    {safeStats.totalProducts > 0 ? Math.round((safeProductStats.rejectedProducts / safeStats.totalProducts) * 100) : 0}%
                   </p>
                 </div>
               </div>
@@ -396,7 +611,7 @@ const AdminOverview = () => {
                   <span className="text-white text-sm">Pending Verification</span>
                 </div>
                 <div className="text-right">
-                  <p className="text-white font-semibold">{stats.pendingVerifications}</p>
+                  <p className="text-white font-semibold">{safeStats.pendingVerifications}</p>
                   <p className="text-gray-400 text-xs">Requires attention</p>
                 </div>
               </div>
@@ -409,17 +624,17 @@ const AdminOverview = () => {
             
             <div className="space-y-4">
               <div className="text-center p-4 bg-gradient-to-r from-indigo-600/20 to-purple-600/20 rounded-lg border border-indigo-600/30">
-                <p className="text-3xl font-bold text-white mb-2">+{stats.monthlyGrowth}%</p>
+                <p className="text-3xl font-bold text-white mb-2">+{safeStats.monthlyGrowth}%</p>
                 <p className="text-indigo-300 text-sm">Monthly Growth Rate</p>
               </div>
               
               <div className="grid grid-cols-2 gap-3">
                 <div className="text-center p-3 bg-gray-700 rounded-lg">
-                  <p className="text-lg font-bold text-white">{stats.activeUsers}</p>
+                  <p className="text-lg font-bold text-white">{safeStats.activeUsers}</p>
                   <p className="text-gray-400 text-xs">Active Users</p>
                 </div>
                 <div className="text-center p-3 bg-gray-700 rounded-lg">
-                  <p className="text-lg font-bold text-white">{stats.newUsersThisMonth}</p>
+                  <p className="text-lg font-bold text-white">{safeStats.newUsersThisMonth}</p>
                   <p className="text-gray-400 text-xs">New This Month</p>
                 </div>
               </div>
@@ -442,7 +657,7 @@ const AdminOverview = () => {
             <h3 className="text-xl font-semibold text-white mb-6">Top Product Categories</h3>
             
             <div className="space-y-4">
-              {productStats.topCategories.map((category, index) => (
+              {safeProductStats.topCategories.map((category, index) => (
                 <div key={index} className="space-y-2">
                   <div className="flex items-center justify-between">
                     <span className="text-white text-sm font-medium">{category.name}</span>
@@ -497,7 +712,7 @@ const AdminOverview = () => {
           </div>
           
           <div className="space-y-4">
-            {recentActivity.map((activity) => (
+            {safeRecentActivity.map((activity) => (
               <div key={activity.id} className="flex items-start gap-4 p-4 bg-gray-700 rounded-lg border border-gray-600">
                 <div className={`p-2 rounded-lg ${getActivityColor(activity.type)}`}>
                   {getActivityIcon(activity.icon)}
