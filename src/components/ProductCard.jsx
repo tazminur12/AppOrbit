@@ -74,51 +74,57 @@ const ProductCard = ({ product, onUpvoteToggle, onReportToggle }) => {
   };
 
   return (
-    <div className="group border border-gray-700 rounded-lg shadow-lg p-4 flex flex-col bg-gray-900/80 backdrop-blur-sm text-white hover:shadow-2xl transition-all duration-300 hover:border-gray-500 hover:bg-gray-800/90 relative overflow-hidden">
+    <div className="group h-full border border-gray-700 rounded-lg shadow-lg bg-gray-900/80 backdrop-blur-sm text-white hover:shadow-2xl transition-all duration-300 hover:border-gray-500 hover:bg-gray-800/90 relative overflow-hidden flex flex-col">
       {/* Glow Effect */}
       <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 to-purple-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-lg" />
       
-      {/* Image Container */}
-      <div className="relative overflow-hidden rounded-lg mb-3">
+      {/* Image Container - Fixed Height */}
+      <div className="relative overflow-hidden rounded-t-lg mb-4">
         <img
           src={localProduct.image}
           alt={localProduct.name}
           className="h-48 w-full object-cover transition-transform duration-300 group-hover:scale-110"
           onError={(e) => {
             e.target.onerror = null;
-            e.target.src = 'https://via.placeholder.com/300x200?text=No+Image';
+            e.target.src = 'https://images.unsplash.com/photo-1677442136019-21780ecad995?w=400&h=300&fit=crop';
           }}
         />
         {/* Image Overlay */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
       </div>
 
-      {/* Content */}
-      <div className="relative z-10">
-        {/* Corrected Link path to /products/:id */}
+      {/* Content - Flex grow to fill remaining space */}
+      <div className="relative z-10 flex-1 flex flex-col p-4">
+        {/* Title */}
         <Link
           to={`/products/${localProduct._id}`}
-          className="hover:text-indigo-400 transition-colors"
+          className="hover:text-indigo-400 transition-colors mb-3"
         >
-          <h3 className="font-bold text-lg cursor-pointer line-clamp-1 group-hover:text-indigo-300 transition-colors">
+          <h3 className="font-bold text-lg cursor-pointer line-clamp-2 group-hover:text-indigo-300 transition-colors min-h-[3.5rem]">
             {localProduct.name}
           </h3>
         </Link>
 
-        <p className="text-sm text-gray-300 mb-2 line-clamp-2 group-hover:text-gray-200 transition-colors">
+        {/* Description - Fixed height */}
+        <p className="text-sm text-gray-300 mb-4 line-clamp-3 group-hover:text-gray-200 transition-colors min-h-[4.5rem]">
           {localProduct.description}
         </p>
 
         {/* Tags */}
-        <div className="flex flex-wrap gap-1 mb-2">
-          {localProduct.tags?.map((tag, i) => (
+        <div className="flex flex-wrap gap-1 mb-4">
+          {localProduct.tags?.slice(0, 3).map((tag, i) => (
             <span
               key={i}
-              className="bg-indigo-800/80 text-white px-2 py-0.5 rounded-full text-xs border border-indigo-600/50 hover:bg-indigo-700/80 transition-colors duration-200"
+              className="bg-indigo-800/80 text-white px-2 py-1 rounded-full text-xs border border-indigo-600/50 hover:bg-indigo-700/80 transition-colors duration-200"
             >
               #{tag}
             </span>
           ))}
+          {localProduct.tags?.length > 3 && (
+            <span className="bg-gray-700/80 text-gray-300 px-2 py-1 rounded-full text-xs">
+              +{localProduct.tags.length - 3} more
+            </span>
+          )}
         </div>
 
         {/* External Link */}
@@ -127,7 +133,7 @@ const ProductCard = ({ product, onUpvoteToggle, onReportToggle }) => {
             href={localProduct.externalLink}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-indigo-400 hover:text-indigo-300 hover:underline mb-2 text-sm truncate transition-colors duration-200 flex items-center gap-1"
+            className="text-indigo-400 hover:text-indigo-300 hover:underline mb-4 text-sm truncate transition-colors duration-200 flex items-center gap-1"
           >
             <span>🔗</span>
             {new URL(localProduct.externalLink).hostname}
@@ -136,39 +142,42 @@ const ProductCard = ({ product, onUpvoteToggle, onReportToggle }) => {
 
         {/* Report Count */}
         {localProduct.reportCount > 0 && (
-          <p className="text-xs text-red-400 mb-1 flex items-center gap-1">
+          <p className="text-xs text-red-400 mb-3 flex items-center gap-1">
             <span>⚠️</span>
             Reports: {localProduct.reportCount}
           </p>
         )}
 
-        {/* Action Buttons */}
-        <div className="mt-auto flex justify-between items-center pt-2">
-          <button
-            onClick={() => handleAction('upvote')}
-            disabled={isProcessing}
-            className={`px-3 py-1 rounded-md transition-all duration-200 flex items-center gap-1 transform hover:scale-105 ${
-              hasUpvoted
-                ? 'bg-green-600 text-white shadow-lg shadow-green-600/50'
-                : 'bg-green-800/80 text-white hover:bg-green-700 hover:shadow-lg hover:shadow-green-700/50'
-            } ${isProcessing ? 'opacity-70 cursor-not-allowed' : ''}`}
-          >
-            <span className="animate-pulse">👍</span>
-            {hasUpvoted ? 'Upvoted' : 'Upvote'} ({localProduct.upvotes || 0})
-          </button>
+        {/* Action Buttons - Push to bottom */}
+        <div className="mt-auto pt-3 border-t border-gray-700">
+          <div className="flex justify-between items-center gap-2">
+            <button
+              onClick={() => handleAction('upvote')}
+              disabled={isProcessing}
+              className={`flex-1 px-3 py-2 rounded-md transition-all duration-200 flex items-center justify-center gap-1 transform hover:scale-105 text-sm ${
+                hasUpvoted
+                  ? 'bg-green-600 text-white shadow-lg shadow-green-600/50'
+                  : 'bg-green-800/80 text-white hover:bg-green-700 hover:shadow-lg hover:shadow-green-700/50'
+              } ${isProcessing ? 'opacity-70 cursor-not-allowed' : ''}`}
+            >
+              <span className="animate-pulse">👍</span>
+              <span className="hidden sm:inline">{hasUpvoted ? 'Upvoted' : 'Upvote'}</span>
+              <span className="text-xs">({localProduct.upvotes || 0})</span>
+            </button>
 
-          <button
-            onClick={() => handleAction('report')}
-            disabled={isProcessing}
-            className={`px-3 py-1 rounded-md transition-all duration-200 flex items-center gap-1 transform hover:scale-105 ${
-              hasReported
-                ? 'bg-red-600 text-white shadow-lg shadow-red-600/50'
-                : 'bg-red-800/80 text-white hover:bg-red-700 hover:shadow-lg hover:shadow-red-700/50'
-            } ${isProcessing ? 'opacity-70 cursor-not-allowed' : ''}`}
-          >
-            <span className="animate-pulse">⚠️</span>
-            {hasReported ? 'Reported' : 'Report'}
-          </button>
+            <button
+              onClick={() => handleAction('report')}
+              disabled={isProcessing}
+              className={`flex-1 px-3 py-2 rounded-md transition-all duration-200 flex items-center justify-center gap-1 transform hover:scale-105 text-sm ${
+                hasReported
+                  ? 'bg-red-600 text-white shadow-lg shadow-red-600/50'
+                  : 'bg-red-800/80 text-white hover:bg-red-700 hover:shadow-lg hover:shadow-red-700/50'
+              } ${isProcessing ? 'opacity-70 cursor-not-allowed' : ''}`}
+            >
+              <span className="animate-pulse">⚠️</span>
+              <span className="hidden sm:inline">{hasReported ? 'Reported' : 'Report'}</span>
+            </button>
+          </div>
         </div>
       </div>
 

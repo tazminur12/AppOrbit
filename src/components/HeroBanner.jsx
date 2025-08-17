@@ -1,158 +1,172 @@
 import React from 'react';
-import { Canvas, useFrame } from '@react-three/fiber';
-import { Float, Sparkles, Text3D } from '@react-three/drei';
-import * as THREE from 'three';
-
-// Floating Tech Icons for Hero
-const FloatingTechIcons = () => {
-  const groupRef = React.useRef();
-
-  useFrame((state) => {
-    if (groupRef.current) {
-      groupRef.current.rotation.y += 0.002;
-      groupRef.current.children.forEach((child, index) => {
-        child.position.y += Math.sin(state.clock.elapsedTime * 0.5 + index) * 0.001;
-        child.rotation.x += 0.01;
-        child.rotation.z += 0.005;
-      });
-    }
-  });
-
-  return (
-    <group ref={groupRef}>
-      {/* React Logo */}
-      <Float speed={2} rotationIntensity={0.5} floatIntensity={0.5}>
-        <mesh position={[8, 2, 0]}>
-          <torusGeometry args={[0.4, 0.1, 16, 32]} />
-          <meshStandardMaterial
-            color="#61DAFB"
-            transparent
-            opacity={0.8}
-            wireframe
-          />
-        </mesh>
-      </Float>
-
-      {/* Node.js */}
-      <Float speed={1.8} rotationIntensity={0.4} floatIntensity={0.6}>
-        <mesh position={[-8, -1, 1]}>
-          <boxGeometry args={[0.5, 0.5, 0.5]} />
-          <meshStandardMaterial
-            color="#68A063"
-            transparent
-            opacity={0.7}
-            wireframe
-          />
-        </mesh>
-      </Float>
-
-      {/* Database */}
-      <Float speed={2.2} rotationIntensity={0.6} floatIntensity={0.4}>
-        <mesh position={[6, -2, -1]}>
-          <cylinderGeometry args={[0.3, 0.3, 0.8, 16]} />
-          <meshStandardMaterial
-            color="#F7DF1E"
-            transparent
-            opacity={0.8}
-            wireframe
-          />
-        </mesh>
-      </Float>
-
-      {/* AI/ML */}
-      <Float speed={1.9} rotationIntensity={0.3} floatIntensity={0.7}>
-        <mesh position={[-6, 1, 2]}>
-          <octahedronGeometry args={[0.4]} />
-          <meshStandardMaterial
-            color="#FF6B6B"
-            transparent
-            opacity={0.7}
-            wireframe
-          />
-        </mesh>
-      </Float>
-    </group>
-  );
-};
+import { motion } from 'framer-motion';
+import { FaRocket, FaLightbulb, FaUsers, FaArrowRight } from 'react-icons/fa';
 
 const HeroBanner = () => {
+  const heroFeatures = [
+    { icon: <FaRocket className="text-2xl" />, text: "Launch Ideas" },
+    { icon: <FaLightbulb className="text-2xl" />, text: "Innovate" },
+    { icon: <FaUsers className="text-2xl" />, text: "Connect" }
+  ];
+
   return (
-    <section className="relative w-full min-h-[60vh] flex items-center justify-center overflow-hidden">
-      {/* 3D Animation Background */}
-      <div className="absolute inset-0 pointer-events-none">
-        <Canvas camera={{ position: [0, 0, 8], fov: 75 }}>
-          <ambientLight intensity={0.3} />
-          <pointLight position={[5, 5, 5]} intensity={0.8} />
-          <pointLight position={[-5, -5, -5]} intensity={0.4} color="#a78bfa" />
-          
-          <FloatingTechIcons />
-          
-          <Sparkles
-            count={100}
-            scale={20}
-            size={3}
-            speed={0.3}
-            opacity={0.4}
-            color="#a78bfa"
-          />
-        </Canvas>
+    <section className="relative w-full min-h-[80vh] flex items-center justify-center overflow-hidden bg-gradient-to-br from-gray-900 via-purple-900 to-black">
+      {/* Background Pattern */}
+      <div className="absolute inset-0">
+        <div className="absolute inset-0 bg-gradient-to-r from-purple-900/20 to-indigo-900/20" />
+        <div
+          className="absolute inset-0 opacity-30"
+          style={{
+            backgroundImage: 'radial-gradient(rgba(255,255,255,0.1) 1px, transparent 1px)',
+            backgroundSize: '30px 30px',
+          }}
+        />
       </div>
 
-      {/* Dotted grid background */}
-      <div
-        className="absolute inset-0 pointer-events-none z-0"
-        aria-hidden="true"
-        style={{
-          backgroundImage:
-            'radial-gradient(rgba(255,255,255,0.04) 1px, transparent 1px)',
-          backgroundSize: '20px 20px',
-        }}
-      />
-      {/* Remove the soft gradient overlay for seamless look */}
-      
-      <div className="relative z-10 w-full max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between px-6 py-16 gap-12">
-        {/* Left Text */}
-        <div className="flex-1 max-w-xl">
-          <h1 className="text-4xl md:text-6xl font-extrabold leading-tight mb-6 bg-gradient-to-r from-purple-300 via-indigo-300 to-purple-400 bg-clip-text text-transparent drop-shadow-lg animate-pulse">
-            Discover, Share, and Illuminate Tech Innovations
-          </h1>
-          <p className="text-lg md:text-xl text-gray-300 mb-8 max-w-lg">
-            Discover and celebrate the latest tech ideas. AppOrbit connects innovators, developers, and tech lovers in one digital universe.
-          </p>
-          <button className="px-8 py-3 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-semibold shadow-lg hover:from-purple-700 hover:to-indigo-700 transition-all text-lg relative focus:outline-none focus:ring-2 focus:ring-purple-400 group">
-            <span className="drop-shadow group-hover:scale-105 transition-transform">Explore More</span>
-            <span className="absolute -inset-1 rounded-xl blur-xl opacity-40 bg-gradient-to-r from-purple-600 to-indigo-600 z-[-1] group-hover:opacity-60 transition-opacity" />
-          </button>
-        </div>
+      {/* Main Content */}
+      <div className="relative z-10 w-full max-w-7xl mx-auto px-6 py-16">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+          {/* Left Content */}
+          <motion.div
+            initial={{ opacity: 0, x: -50 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.8 }}
+            className="text-center lg:text-left"
+          >
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.2 }}
+              className="mb-6"
+            >
+              <h1 className="text-5xl lg:text-7xl font-extrabold leading-tight mb-6">
+                <span className="bg-gradient-to-r from-purple-300 via-indigo-300 to-purple-400 bg-clip-text text-transparent">
+                  Discover
+                </span>
+                <br />
+                <span className="text-white">
+                  Tech Innovation
+                </span>
+              </h1>
+            </motion.div>
 
-        {/* Right Card with Enhanced 3D Effects */}
-        <div className="flex-1 flex justify-center items-center">
-          <div className="relative group">
-            {/* Animated glow effects */}
-            <div className="absolute top-4 left-4 w-full h-full rounded-3xl bg-gradient-to-r from-purple-500/20 to-indigo-500/20 blur-md scale-95 z-0 animate-pulse" />
-            <div className="absolute top-8 left-8 w-full h-full rounded-3xl bg-gradient-to-r from-indigo-500/15 to-pink-500/15 blur-md scale-90 z-0 animate-pulse delay-1000" />
-            
-            <div className="relative z-10 rounded-3xl bg-purple-900/80 border border-white/10 shadow-2xl p-8 w-[320px] md:w-[350px] backdrop-blur-xl group-hover:scale-105 transition-all duration-300 hover:border-white/20">
-              <div className="flex flex-col items-center text-center">
-                <div className="w-20 h-20 rounded-full bg-gradient-to-tr from-purple-600 to-indigo-600 flex items-center justify-center mb-4 border-4 border-purple-300/30 shadow-lg group-hover:border-purple-300/50 transition-all duration-300 animate-bounce">
-                  <img
-                    src="/ai.png"
-                    alt="icon"
-                    className="w-10 h-10 object-contain"
-                  />
+            <motion.p
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.4 }}
+              className="text-xl lg:text-2xl text-gray-300 mb-8 max-w-2xl lg:mx-0 mx-auto leading-relaxed"
+            >
+              Connect with developers, designers, and innovators worldwide. Share your tech ideas, discover amazing tools, and build the future together.
+            </motion.p>
+
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.6 }}
+              className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start"
+            >
+              <button className="group px-8 py-4 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-semibold text-lg shadow-lg hover:from-purple-700 hover:to-indigo-700 transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-purple-500/50">
+                <span className="flex items-center gap-2">
+                  Get Started Free
+                  <FaArrowRight className="group-hover:translate-x-1 transition-transform" />
+                </span>
+              </button>
+              <button className="px-8 py-4 rounded-xl border-2 border-purple-500 text-purple-400 font-semibold text-lg hover:bg-purple-500 hover:text-white transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-purple-500/50">
+                Explore Products
+              </button>
+            </motion.div>
+
+            {/* Feature Pills */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.8 }}
+              className="flex flex-wrap gap-3 justify-center lg:justify-start mt-8"
+            >
+              {heroFeatures.map((feature, index) => (
+                <div
+                  key={index}
+                  className="flex items-center gap-2 px-4 py-2 bg-purple-800/30 border border-purple-500/30 rounded-full text-purple-300 backdrop-blur-sm"
+                >
+                  {feature.icon}
+                  <span className="text-sm font-medium">{feature.text}</span>
                 </div>
-                <h2 className="text-xl font-bold text-white mb-2 group-hover:text-purple-300 transition-colors">Developer Productivity Suite</h2>
-                <p className="text-gray-300 mb-6 text-sm">
-                  Supercharge your workflow with tools built for creators and coders.
+              ))}
+            </motion.div>
+          </motion.div>
+
+          {/* Right Content - Hero Image */}
+          <motion.div
+            initial={{ opacity: 0, x: 50 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.8, delay: 0.3 }}
+            className="flex justify-center lg:justify-end"
+          >
+            <div className="relative group">
+              {/* Glow Effects */}
+              <div className="absolute -inset-4 bg-gradient-to-r from-purple-500/20 to-indigo-500/20 rounded-3xl blur-xl opacity-75 group-hover:opacity-100 transition-opacity duration-500" />
+              <div className="absolute -inset-2 bg-gradient-to-r from-indigo-500/15 to-pink-500/15 rounded-3xl blur-lg opacity-50 group-hover:opacity-75 transition-opacity duration-500 delay-200" />
+              
+              {/* Main Card */}
+              <div className="relative bg-gradient-to-br from-gray-800/90 to-gray-900/90 backdrop-blur-xl rounded-3xl p-8 border border-white/10 shadow-2xl w-[350px] h-[400px] flex flex-col items-center justify-center text-center group-hover:scale-105 transition-transform duration-500">
+                {/* Hero Image */}
+                <div className="relative mb-6">
+                  <div className="w-24 h-24 rounded-full bg-gradient-to-tr from-purple-600 to-indigo-600 flex items-center justify-center mb-4 border-4 border-purple-300/30 shadow-lg group-hover:border-purple-300/50 transition-all duration-300">
+                    <img
+                      src="/ai.png"
+                      alt="AI Innovation"
+                      className="w-12 h-12 object-contain"
+                      onError={(e) => {
+                        e.target.onerror = null;
+                        e.target.src = 'https://via.placeholder.com/48x48?text=AI';
+                      }}
+                    />
+                  </div>
+                  <div className="absolute -inset-2 bg-gradient-to-r from-purple-500/20 to-indigo-500/20 rounded-full blur-md opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                </div>
+
+                <h3 className="text-2xl font-bold text-white mb-3 group-hover:text-purple-300 transition-colors">
+                  AI-Powered Innovation
+                </h3>
+                <p className="text-gray-300 mb-6 text-sm leading-relaxed">
+                  Discover cutting-edge AI tools and solutions that are transforming the tech landscape
                 </p>
-                <button className="px-6 py-2 rounded-lg bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-semibold shadow-md hover:from-purple-700 hover:to-indigo-700 transition-all text-base focus:outline-none focus:ring-2 focus:ring-purple-400 hover:scale-105 transform">
-                  Explore Now
-                </button>
+
+                {/* Stats */}
+                <div className="grid grid-cols-2 gap-4 w-full">
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-purple-400">500+</div>
+                    <div className="text-xs text-gray-400">AI Tools</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-indigo-400">10K+</div>
+                    <div className="text-xs text-gray-400">Users</div>
+                  </div>
+                </div>
               </div>
             </div>
-          </div>
+          </motion.div>
         </div>
       </div>
+
+      {/* Scroll Indicator */}
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 1, delay: 1.2 }}
+        className="absolute bottom-8 left-1/2 transform -translate-x-1/2"
+      >
+        <div className="flex flex-col items-center text-gray-400">
+          <span className="text-sm mb-2">Scroll to explore</span>
+          <div className="w-6 h-10 border-2 border-gray-400 rounded-full flex justify-center">
+            <motion.div
+              className="w-1 h-3 bg-gray-400 rounded-full mt-2"
+              animate={{ y: [0, 12, 0] }}
+              transition={{ duration: 2, repeat: Infinity }}
+            />
+          </div>
+        </div>
+      </motion.div>
     </section>
   );
 };
