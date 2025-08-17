@@ -62,7 +62,7 @@ const router = createBrowserRouter([
             { path: 'user/my-products', element: <MyProducts /> },
             { path: 'user/update-product/:id', element: <UpdateProduct /> },
             // Moderator dashboard
-            { path: 'moderator/overview', element: <Overview /> },
+            { path: 'moderator', element: <ReviewQueue /> },
             { path: 'moderator/review-queue', element: <ReviewQueue /> },
             { path: 'moderator/reported-contents', element: <ReportedContents /> },
             // Admin dashboard

@@ -12,7 +12,6 @@ const sidebarLinks = {
     { to: '/dashboard/user/my-products', label: 'My Products' },
   ],
   moderator: [
-    { to: '/dashboard/moderator/overview', label: 'Overview' },
     { to: '/dashboard/moderator/review-queue', label: 'Product Review Queue' },
     { to: '/dashboard/moderator/reported-contents', label: 'Reported Contents' },
   ],
