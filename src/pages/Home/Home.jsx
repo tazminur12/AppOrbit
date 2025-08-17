@@ -11,6 +11,7 @@ import NewsletterSection from '../../components/NewsletterSection';
 import CallToActionSection from '../../components/CallToActionSection';
 import CategoriesSection from '../../components/CategoriesSection';
 import TestimonialsSection from '../../components/TestimonialsSection';
+import CountAnimation from '../../components/CountAnimation';
 
 const Home = () => {
   const [particles, setParticles] = useState([]);
@@ -151,18 +152,13 @@ const Home = () => {
             
             <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
               {stats.map((stat, index) => (
-                <motion.div
+                <CountAnimation
                   key={index}
-                  initial={{ opacity: 0, scale: 0.5 }}
-                  whileInView={{ opacity: 1, scale: 1 }}
-                  transition={{ duration: 0.5, delay: index * 0.1 }}
-                  className="text-center"
-                >
-                  <div className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-purple-400 to-indigo-500 bg-clip-text text-transparent mb-2">
-                    {stat.number}
-                  </div>
-                  <div className="text-gray-300 text-lg">{stat.label}</div>
-                </motion.div>
+                  number={stat.number}
+                  label={stat.label}
+                  duration={2}
+                  delay={index * 0.2}
+                />
               ))}
             </div>
           </div>

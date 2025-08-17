@@ -112,7 +112,7 @@ const ProductCard = ({ product, onUpvoteToggle, onReportToggle }) => {
 
         {/* Price Display */}
         <div className="mb-4">
-          {localProduct.price ? (
+          {localProduct.price && (
             <>
               <div className="text-lg font-bold text-green-400">
                 ${parseFloat(localProduct.price).toFixed(2)}
@@ -123,10 +123,6 @@ const ProductCard = ({ product, onUpvoteToggle, onReportToggle }) => {
                 </div>
               )}
             </>
-          ) : (
-            <div className="text-lg font-bold text-blue-400">
-              Free
-            </div>
           )}
         </div>
 

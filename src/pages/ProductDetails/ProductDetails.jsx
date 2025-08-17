@@ -183,7 +183,7 @@ const ProductDetails = () => {
   }
 
   return (
-    <div className="min-h-screen max-w-5xl mx-auto px-4 py-8 bg-gradient-to-br from-gray-900 via-purple-900 to-black text-gray-100 relative">
+    <div className="min-h-screen max-w-4xl mx-auto px-4 py-8 bg-purple-900 text-gray-100 relative">
       {/* 3D Animation Background */}
       <div className="absolute inset-0 pointer-events-none opacity-20">
         <Canvas camera={{ position: [0, 0, 12], fov: 75 }}>
