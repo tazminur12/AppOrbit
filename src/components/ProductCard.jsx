@@ -110,6 +110,26 @@ const ProductCard = ({ product, onUpvoteToggle, onReportToggle }) => {
           {localProduct.description}
         </p>
 
+        {/* Price Display */}
+        <div className="mb-4">
+          {localProduct.price ? (
+            <>
+              <div className="text-lg font-bold text-green-400">
+                ${parseFloat(localProduct.price).toFixed(2)}
+              </div>
+              {localProduct.originalPrice && localProduct.originalPrice > localProduct.price && (
+                <div className="text-sm text-gray-400 line-through">
+                  ${parseFloat(localProduct.originalPrice).toFixed(2)}
+                </div>
+              )}
+            </>
+          ) : (
+            <div className="text-lg font-bold text-blue-400">
+              Free
+            </div>
+          )}
+        </div>
+
         {/* Tags */}
         <div className="flex flex-wrap gap-1 mb-4">
           {localProduct.tags?.slice(0, 3).map((tag, i) => (
