@@ -31,26 +31,26 @@ const AnimationShowcase = () => {
       <Background3DAnimation intensity="low" />
       
       {/* Header */}
-      <div className="relative z-10 pt-8 pb-6">
+      <div className="relative z-10 pt-6 pb-4">
         <div className="container mx-auto px-4">
-          <h1 className="text-4xl md:text-6xl font-bold text-center mb-4 bg-gradient-to-r from-purple-400 to-indigo-500 bg-clip-text text-transparent">
+          <h1 className="text-2xl md:text-4xl font-bold text-center mb-2 bg-gradient-to-r from-purple-400 to-indigo-500 bg-clip-text text-transparent">
             3D Animation Showcase
           </h1>
-          <p className="text-xl text-center text-gray-300 mb-8">
-            Professional 3D animations built with React Three Fiber
+          <p className="text-base text-center text-gray-300 mb-6">
+            Professional 3D animations for modern web applications
           </p>
         </div>
       </div>
 
       {/* Tab Navigation */}
-      <div className="relative z-10 mb-8">
+      <div className="relative z-10 mb-6">
         <div className="container mx-auto px-4">
           <div className="flex flex-wrap justify-center gap-2">
             {tabs.map((tab) => (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`px-6 py-3 rounded-lg font-medium transition-all duration-300 ${
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 ${
                   activeTab === tab.id
                     ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-lg shadow-purple-600/50'
                     : 'bg-gray-800 text-gray-300 hover:bg-gray-700 hover:text-white'
@@ -64,20 +64,20 @@ const AnimationShowcase = () => {
       </div>
 
       {/* Content Area */}
-      <div className="relative z-10 pb-16">
+      <div className="relative z-10 pb-12">
         <div className="container mx-auto px-4">
-          <div className="bg-gray-800/50 backdrop-blur-sm rounded-2xl p-8 border border-purple-700">
+          <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-6 border border-purple-700">
             {/* Tab Content */}
-            <div className="min-h-[600px] flex items-center justify-center">
+            <div className="min-h-[400px] flex items-center justify-center">
               {tabs.find(tab => tab.id === activeTab)?.component}
             </div>
 
             {/* Description */}
-            <div className="mt-8 text-center">
-              <h3 className="text-2xl font-semibold mb-4 text-purple-300">
+            <div className="mt-6 text-center">
+              <h3 className="text-lg font-semibold mb-3 text-purple-300">
                 {tabs.find(tab => tab.id === activeTab)?.name}
               </h3>
-              <p className="text-gray-300 max-w-2xl mx-auto">
+              <p className="text-gray-300 max-w-2xl mx-auto text-sm">
                 {activeTab === 'global' && 
                   "Global background animation with floating particles, geometric shapes, and dynamic lighting effects."
                 }
@@ -100,32 +100,32 @@ const AnimationShowcase = () => {
             </div>
 
             {/* Features Grid */}
-            <div className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="bg-purple-800/40 rounded-lg p-6 border border-purple-600">
-                <h4 className="text-lg font-semibold mb-3 text-purple-300">Performance Optimized</h4>
-                <p className="text-gray-300 text-sm">
+            <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="bg-purple-800/40 rounded-lg p-4 border border-purple-600">
+                <h4 className="text-base font-semibold mb-2 text-purple-300">Performance Optimized</h4>
+                <p className="text-gray-300 text-xs">
                   Efficient rendering with optimized geometries and smart re-rendering strategies.
                 </p>
               </div>
-              <div className="bg-purple-800/40 rounded-lg p-6 border border-purple-600">
-                <h4 className="text-lg font-semibold mb-3 text-indigo-300">Interactive Elements</h4>
-                <p className="text-gray-300 text-sm">
+              <div className="bg-purple-800/40 rounded-lg p-4 border border-purple-600">
+                <h4 className="text-base font-semibold mb-2 text-indigo-300">Interactive Elements</h4>
+                <p className="text-gray-300 text-xs">
                   Hover effects, click animations, and responsive interactions for better UX.
                 </p>
               </div>
-              <div className="bg-purple-800/40 rounded-lg p-6 border border-purple-600">
-                <h4 className="text-lg font-semibold mb-3 text-pink-300">Modern Design</h4>
-                <p className="text-gray-300 text-sm">
+              <div className="bg-purple-800/40 rounded-lg p-4 border border-purple-600">
+                <h4 className="text-base font-semibold mb-2 text-pink-300">Modern Design</h4>
+                <p className="text-gray-300 text-xs">
                   Professional visual effects with glow, sparkles, and dynamic lighting systems.
                 </p>
               </div>
             </div>
 
             {/* Code Example */}
-            <div className="mt-8">
-              <h4 className="text-lg font-semibold mb-4 text-center text-purple-300">Usage Example</h4>
-              <div className="bg-gray-900 rounded-lg p-4 border border-purple-700">
-                <pre className="text-sm text-gray-300 overflow-x-auto">
+            <div className="mt-6">
+              <h4 className="text-base font-semibold mb-3 text-center text-purple-300">Usage Example</h4>
+              <div className="bg-gray-900 rounded-lg p-3 border border-purple-700">
+                <pre className="text-xs text-gray-300 overflow-x-auto">
                   <code>{`import { Global3DAnimation } from './components/Global3DAnimation';
 
 // Add to your component
@@ -147,15 +147,6 @@ const AnimationShowcase = () => {
           <Loading3DAnimation size="large" />
         </div>
       )}
-
-      {/* Footer */}
-      <div className="relative z-10 mt-16">
-        <div className="container mx-auto px-4 text-center">
-          <p className="text-gray-400">
-            Built with React Three Fiber, Three.js, and Tailwind CSS
-          </p>
-        </div>
-      </div>
     </div>
   );
 };
